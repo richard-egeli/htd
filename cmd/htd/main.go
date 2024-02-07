@@ -9,7 +9,6 @@ import (
 )
 
 import "github.com/richard-egeli/htd/views"
-import "github.com/richard-egeli/htd/views/pages"
 
 func createEventHandler() func(http.ResponseWriter, *http.Request) {
 	shouldReload := false
