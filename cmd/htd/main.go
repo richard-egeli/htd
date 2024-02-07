@@ -45,8 +45,6 @@ func loginGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginPOST(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(3 * time.Second)
-
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Failed to parse form input", http.StatusInternalServerError)
@@ -76,12 +74,24 @@ func loginPOST(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("HX-Redirect", "/dashboard")
 }
 
-func pageNotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	component := pages.PageNotFound()
+func defaultRouteHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	switch r.URL.Path {
+	case "/":
+		http.Redirect(w, r, "/login", http.StatusFound)
+
+	default:
+		component := pages.NotFoundPage()
+		err := component.Render(context.Background(), w)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-
 	switch r.Method {
 	case "GET":
 		loginGET(w, r)
@@ -95,7 +105,7 @@ func main() {
 
 	http.HandleFunc("/events", createEventHandler())
 	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/", pageNotFoundHandler)
+	http.HandleFunc("/", defaultRouteHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	port := ":8080"
