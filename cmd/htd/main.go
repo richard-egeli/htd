@@ -34,7 +34,7 @@ func createEventHandler() func(http.ResponseWriter, *http.Request) {
 
 func main() {
 	h1 := func(w http.ResponseWriter, r *http.Request) {
-		comp := views.LoginLayout()
+		comp := views.BaseLayout("Title")
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

@@ -1,11 +1,13 @@
-package views
+package pages
+
+import "github.com/richard-egeli/htd/views"
 
 templ LoginPage() {
 	<div>"Login Page Yay!"</div>
 }
 
 templ LoginLayout() {
-	@BaseLayout("Login Page") {
+	@views.BaseLayout("Login Page") {
 		@LoginPage()
 	}
 }
