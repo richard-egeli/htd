@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-import "github.com/richard-egeli/htd/views"
+import "github.com/richard-egeli/htd/views/pages"
 
 func createEventHandler() func(http.ResponseWriter, *http.Request) {
 	shouldReload := false
@@ -34,11 +34,11 @@ func createEventHandler() func(http.ResponseWriter, *http.Request) {
 
 func main() {
 	h1 := func(w http.ResponseWriter, r *http.Request) {
-		comp := views.BaseLayout("Title")
+		component := pages.LoginLayout()
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-		err := comp.Render(context.Background(), w)
+		err := component.Render(context.Background(), w)
 		if err != nil {
 			http.Error(w, "Failed to render component", http.StatusInternalServerError)
 			return

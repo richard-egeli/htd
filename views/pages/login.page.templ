@@ -2,12 +2,16 @@ package pages
 
 import "github.com/richard-egeli/htd/views"
 
-templ LoginPage() {
-	<div>"Login Page Yay!"</div>
+templ loginPage() {
+<div>
+  <div class="flex justify-center">
+    <p class="flex">Hello, World</p>
+  </div>
+</div>
 }
 
 templ LoginLayout() {
-	@views.BaseLayout("Login Page") {
-		@LoginPage()
-	}
+@views.BaseLayout("Login Page") {
+@loginPage()
+}
 }
