@@ -5,69 +5,9 @@ import (
 	"log"
 	"net/http"
 	"time"
-)
 
-// type IndexData struct {
-// 	Title string
-// }
-//
-// func LoginPage(w http.ResponseWriter, _ *http.Request) {
-// 	loginButtonData := button.HtdButton{
-// 		Type: button.Submit,
-// 		Id:   "loginButton",
-// 		Text: "Login",
-// 	}
-//
-// 	resetButtonData := button.HtdButton{
-// 		Type: button.Submit,
-// 		Text: "Reset Password",
-// 	}
-//
-// 	usernameInputData := input.HtdInput{
-// 		Type:        input.Text,
-// 		Name:        "username",
-// 		Placeholder: "Username",
-// 	}
-//
-// 	passwordInputData := input.HtdInput{
-// 		Type:        input.Password,
-// 		Name:        "password",
-// 		Placeholder: "Password",
-// 	}
-//
-// 	files, err := template.ParseFiles("src/views/index.html", "src/views/login.html", "src/views/button.html", "src/views/input.html")
-//
-// 	templ := template.Must(files, err)
-// 	templ.ExecuteTemplate(w, "index.html", map[string]interface{}{
-// 		"Title":         "Main Page",
-// 		"LoginButton":   loginButtonData,
-// 		"ResetPassword": resetButtonData,
-// 		"UsernameInput": usernameInputData,
-// 		"PasswordInput": passwordInputData,
-// 	})
-// }
-//
-// func LoginEvent(w http.ResponseWriter, r *http.Request) {
-// 	if err := r.ParseForm(); err != nil {
-// 		fmt.Fprintf(w, "ParseForm() err: %v", err)
-// 		return
-// 	}
-//
-// 	username := r.FormValue("username")
-// 	password := r.FormValue("password")
-//
-// 	log.Printf("Username %v Password %v", username, password)
-//
-// 	time.Sleep(5 * time.Second)
-//
-// 	if len(username) > 0 {
-// 		w.Header().Add("HX-Location", "/dashboard")
-// 		w.Header().Add("Location", "/dashboard")
-// 	} else {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 		fmt.Fprintf(w, "Unauthorized")
-// 	}
-// }
+	"github.com/richard-egeli/htd/views"
+)
 
 func createEventHandler() func(http.ResponseWriter, *http.Request) {
 	shouldReload := false
@@ -93,7 +33,6 @@ func createEventHandler() func(http.ResponseWriter, *http.Request) {
 
 func main() {
 	h1 := func(w http.ResponseWriter, _ *http.Request) {
-		// tmpl := template.Must(template.ParseFiles("./src/views/index.html"))
 
 	}
 
