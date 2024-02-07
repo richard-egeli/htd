@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/richard-egeli/htd/views"
 	"log"
 	"net/http"
 	"time"
 )
+
+import "github.com/richard-egeli/htd/views"
 
 func createEventHandler() func(http.ResponseWriter, *http.Request) {
 	shouldReload := false
@@ -31,15 +33,22 @@ func createEventHandler() func(http.ResponseWriter, *http.Request) {
 }
 
 func main() {
-	h1 := func(w http.ResponseWriter, _ *http.Request) {
+	h1 := func(w http.ResponseWriter, r *http.Request) {
+		comp := views.LoginLayout()
 
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		err := comp.Render(context.Background(), w)
+		if err != nil {
+			http.Error(w, "Failed to render component", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	fs := http.FileServer(http.Dir("static"))
 	http.HandleFunc("/", h1)
 	http.HandleFunc("/events", createEventHandler())
-	// http.HandleFunc("/login", LoginPage)
-	// http.HandleFunc("/events/login", LoginEvent)
+
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	port := ":8080"
