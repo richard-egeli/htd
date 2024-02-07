@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/richard-egeli/htd/views"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/richard-egeli/htd/views"
 )
 
 func createEventHandler() func(http.ResponseWriter, *http.Request) {

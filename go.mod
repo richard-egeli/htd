@@ -1,4 +1,4 @@
-module htd
+module github.com/richard-egeli/htd
 
 go 1.21.6
 
