@@ -1,0 +1,10 @@
+package views
+
+templ ReloadScript() {
+	<script>
+  const evtSource = new EventSource("/events");
+  evtSource.onmessage = function (event) {
+    window.location.reload();
+  };
+</script>
+}

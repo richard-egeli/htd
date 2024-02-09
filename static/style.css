@@ -1,3 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+.sign-in-button-text {
+  display: block;
+}
+
+.sign-in-button-spinner {
+  display: none;
+}
+
+.htmx-request .sign-in-button-text {
+  display: none;
+}
+
+.htmx-request.sign-in-button-text {
+  display: none;
+}
+
+.htmx-request.sign-in-button-spinner {
+  display: block;
+}
+
+.htmx-request .sign-in-button-spinner {
+  display: block;
+}
