@@ -8,31 +8,8 @@ import (
 	"time"
 
 	"github.com/richard-egeli/htd/pkg/router"
-	"github.com/richard-egeli/htd/views"
 	"github.com/richard-egeli/htd/views/pages"
 )
-
-func createEventHandler() func(http.ResponseWriter, *http.Request) {
-	shouldReload := false
-
-	return func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-
-		if !shouldReload {
-			flusher, ok := w.(http.Flusher)
-			if !ok {
-				http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-				return
-			}
-
-			shouldReload = true
-			fmt.Fprintf(w, "data: %s\n\n", time.Now().Format("2006-01-02T15:04:05Z07:00"))
-			flusher.Flush() // Ensure the message is sent immediately
-		}
-	}
-}
 
 func loginPOST(w http.ResponseWriter, r *http.Request) {
 	time.Sleep(3 * time.Second)
@@ -76,30 +53,9 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func middlewareRefreshEvent(next router.HtdHandler) router.HtdHandler {
-	return router.HtdHandler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-
-		// Add a script tag after handling the next event, in order to insert a <script> tag at the
-		// Very end of the HTML page
-		if r.Method == "GET" {
-			log.Printf("Sending reload script!")
-			err := views.ReloadScript().Render(context.Background(), w)
-			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-		}
-	})}
-}
-
-func setupFileServer() {
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-}
-
 func main() {
 	htdRouter := router.HtdRouter{}
+	htdFileserver := router.HtdFileserver{Dir: "/static"}
 	isDevelopment := true
 
 	loginRoute := router.HtdRoute{
@@ -115,15 +71,15 @@ func main() {
 	}
 
 	if isDevelopment {
-		loginRoute.GET.AddMiddleware(middlewareRefreshEvent)
-		defaultRoute.GET.AddMiddleware(middlewareRefreshEvent)
-		defaultRoute.DEFAULT.AddMiddleware(middlewareRefreshEvent)
-		http.HandleFunc("/events", createEventHandler())
+		loginRoute.GET.AddMiddleware(router.BrowserSSERefreshMiddleware)
+		defaultRoute.GET.AddMiddleware(router.BrowserSSERefreshMiddleware)
+		defaultRoute.DEFAULT.AddMiddleware(router.BrowserSSERefreshMiddleware)
+		router.EnableBrowserSSEEvents("/events")
 	}
 
 	htdRouter.Routes = append(htdRouter.Routes, loginRoute, defaultRoute)
 	htdRouter.Create()
-	setupFileServer()
+	htdFileserver.Create()
 
 	port := ":8080"
 	log.Printf("Serving files on http://localhost %s/", port)

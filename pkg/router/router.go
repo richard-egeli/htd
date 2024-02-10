@@ -46,36 +46,21 @@ type HtdRoute struct {
 }
 
 func (r *HtdRoute) ApplyMiddlewareAll(m HtdMiddleware) {
-	if r.GET.IsValid() {
-		r.GET = m(r.GET)
+	methods := []*HtdHandler{
+		&r.GET,
+		&r.POST,
+		&r.DELETE,
+		&r.PUT,
+		&r.PATCH,
+		&r.HEAD,
+		&r.OPTIONS,
+		&r.DEFAULT,
 	}
 
-	if r.PUT.IsValid() {
-		r.PUT = m(r.PUT)
-	}
-
-	if r.HEAD.IsValid() {
-		r.HEAD = m(r.HEAD)
-	}
-
-	if r.POST.IsValid() {
-		r.POST = m(r.POST)
-	}
-
-	if r.PATCH.IsValid() {
-		r.PATCH = m(r.PATCH)
-	}
-
-	if r.DELETE.IsValid() {
-		r.DELETE = m(r.DELETE)
-	}
-
-	if r.OPTIONS.IsValid() {
-		r.OPTIONS = m(r.OPTIONS)
-	}
-
-	if r.DEFAULT.IsValid() {
-		r.DEFAULT = m(r.DEFAULT)
+	for _, method := range methods {
+		if (*method).IsValid() {
+			*method = m(*method)
+		}
 	}
 }
 
