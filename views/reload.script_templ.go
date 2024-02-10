@@ -23,7 +23,7 @@ func ReloadScript() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script>\n  const evtSource = new EventSource(\"/events\");\n  evtSource.onmessage = function (event) {\n    window.location.reload();\n  };\n</script>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script>\n  const evtSource = new EventSource(\"/server/sent/event/browser/reload\");\n  evtSource.onmessage = function (_) {\n    window.location.reload();\n  };\n</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

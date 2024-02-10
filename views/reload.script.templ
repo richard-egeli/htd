@@ -2,8 +2,8 @@ package views
 
 templ ReloadScript() {
 	<script>
-  const evtSource = new EventSource("/events");
-  evtSource.onmessage = function (event) {
+  const evtSource = new EventSource("/server/sent/event/browser/reload");
+  evtSource.onmessage = function (_) {
     window.location.reload();
   };
 </script>

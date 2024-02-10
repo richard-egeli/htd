@@ -11,9 +11,8 @@ import (
 	"github.com/richard-egeli/htd/views/pages"
 )
 
-func loginPOST(w http.ResponseWriter, r *http.Request) {
+func loginPost(w http.ResponseWriter, r *http.Request) {
 	time.Sleep(3 * time.Second)
-
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Failed to parse form input", http.StatusInternalServerError)
@@ -49,42 +48,22 @@ func loginPOST(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("HX-Redirect", "/dashboard")
 }
 
-func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-
-}
-
 func main() {
-	htdRouter := router.HtdRouter{}
+	htdRouter := router.Create()
 	htdFileserver := router.HtdFileserver{Dir: "/static"}
-	isDevelopment := true
 
-	loginRoute := router.HtdRoute{
-		Path: "/login",
-		GET:  router.Page(pages.LoginPage),
-		POST: router.Route(loginPOST),
-	}
+	htdRouter.EnableBrowserReload()
+	htdRouter.Get("/login", nil, router.Page(pages.LoginPage))
+	htdRouter.Post("/login", nil, router.Route(loginPost))
+	htdRouter.Get("/", nil, router.Redirect("/login"))
+	htdRouter.Get("*", nil, router.Page(pages.NotFoundPage))
 
-	defaultRoute := router.HtdRoute{
-		Path:    "/",
-		GET:     router.Redirect("/login"),
-		DEFAULT: router.Page(pages.NotFoundPage),
-	}
-
-	if isDevelopment {
-		loginRoute.GET.AddMiddleware(router.BrowserSSERefreshMiddleware)
-		defaultRoute.GET.AddMiddleware(router.BrowserSSERefreshMiddleware)
-		defaultRoute.DEFAULT.AddMiddleware(router.BrowserSSERefreshMiddleware)
-		router.EnableBrowserSSEEvents("/events")
-	}
-
-	htdRouter.Routes = append(htdRouter.Routes, loginRoute, defaultRoute)
-	htdRouter.Create()
 	htdFileserver.Create()
 
 	port := ":8080"
 	log.Printf("Serving files on http://localhost %s/", port)
 
-	if err := http.ListenAndServe(port, nil); err != nil {
+	if err := htdRouter.Listen(8080); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -2,148 +2,120 @@ package router
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/a-h/templ"
 )
 
-type HtdMethod string
-
-const (
-	GET     HtdMethod = "GET"
-	PUT     HtdMethod = "PUT"
-	HEAD    HtdMethod = "HEAD"
-	POST    HtdMethod = "POST"
-	PATCH   HtdMethod = "PATCH"
-	DELETE  HtdMethod = "DELETE"
-	OPTIONS HtdMethod = "OPTIONS"
-)
-
-type HtdHandler struct {
-	http.Handler
-}
-
-func (h *HtdHandler) IsValid() bool {
-	return h.Handler != nil
-}
-
-func (h *HtdHandler) AddMiddleware(m HtdMiddleware) {
-	h.Handler = m(*h)
-}
-
-type HtdMiddleware func(HtdHandler) HtdHandler
-
-type HtdRoute struct {
-	Path    string
-	GET     HtdHandler
-	POST    HtdHandler
-	DELETE  HtdHandler
-	PUT     HtdHandler
-	PATCH   HtdHandler
-	HEAD    HtdHandler
-	OPTIONS HtdHandler
-	DEFAULT HtdHandler
-}
-
-func (r *HtdRoute) ApplyMiddlewareAll(m HtdMiddleware) {
-	methods := []*HtdHandler{
-		&r.GET,
-		&r.POST,
-		&r.DELETE,
-		&r.PUT,
-		&r.PATCH,
-		&r.HEAD,
-		&r.OPTIONS,
-		&r.DEFAULT,
-	}
-
-	for _, method := range methods {
-		if (*method).IsValid() {
-			*method = m(*method)
-		}
-	}
-}
-
-type htdRouteHandler struct {
-	method http.Handler
-	error  string
-	code   int
-}
-
-func (r *htdRouteHandler) Init(method http.Handler, error string, code int) {
-	r.method = method
-	r.error = error
-	r.code = code
-}
-
 type HtdRouter struct {
-	Routes []HtdRoute
+	globalMiddleware []HtdMiddleware
+	routes           map[string]*HtdRoute
 }
 
-func (r *HtdRouter) Middleware(m HtdMiddleware) {
-	for i := range r.Routes {
-		r.Routes[i].ApplyMiddlewareAll(m)
+func Create() HtdRouter {
+	return HtdRouter{
+		routes: make(map[string]*HtdRoute),
 	}
 }
 
-func (r *HtdRouter) Create() {
-	for i := range r.Routes {
-		r.Routes[i].Create()
-	}
+func (h *HtdRouter) Use(m HtdMiddleware) {
+	h.globalMiddleware = append(h.globalMiddleware, m)
 }
 
-func (route *HtdRoute) Create() {
-	routeFunc := func(w http.ResponseWriter, r *http.Request) {
-		var handle htdRouteHandler
+func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []HtdMiddleware, handler http.Handler) error {
+	if route, ok := h.routes[path]; ok {
+		methodFunc := route.GetMethodHandler(method)
+		if methodFunc != nil {
+			log.Printf("Failed setting " + string(method))
+			return errors.New(string(method) + " already contains a route on path " + path)
+		}
+		route.SetMethodHandler(method, handler)
+		log.Printf("Setting POST request " + string(method))
 
-		switch HtdMethod(r.Method) {
-		case GET:
-			handle.Init(route.GET, "Not Found", http.StatusNotFound)
-		case POST:
-			handle.Init(route.POST, "Method Not Allowed", http.StatusMethodNotAllowed)
-		case DELETE:
-			handle.Init(route.DELETE, "Method Not Allowed", http.StatusMethodNotAllowed)
-		case PUT:
-			handle.Init(route.DELETE, "Method Not Allowed", http.StatusMethodNotAllowed)
-		case PATCH:
-			handle.Init(route.DELETE, "Method Not Allowed", http.StatusMethodNotAllowed)
-		case HEAD:
-			handle.Init(route.DELETE, "Method Not Allowed", http.StatusMethodNotAllowed)
-		case OPTIONS:
-			handle.Init(route.DELETE, "Method Not Allowed", http.StatusMethodNotAllowed)
-		default:
-			handle.Init(nil, "Not Found", http.StatusNotFound)
+	} else {
+		log.Printf("Creating new " + string(method) + " On path " + path)
+		newRoute := HtdRoute{Path: path}
+		newRoute.SetMethodHandler(method, handler)
+		h.routes[path] = &newRoute
+	}
+
+	handle := h.routes[path].GetMethodHandler(method)
+	for i := len(mw) - 1; i >= 0; i-- {
+		m := mw[i]
+		*handle = m(*handle)
+	}
+
+	return nil
+}
+
+func (h *HtdRouter) Post(path string, middlewares []HtdMiddleware, handler http.Handler) error {
+	return h.setMethod(POST, path, middlewares, handler)
+}
+
+func (h *HtdRouter) Get(path string, middlewares []HtdMiddleware, handler http.Handler) error {
+	return h.setMethod(GET, path, middlewares, handler)
+}
+
+func (router *HtdRouter) Listen(port int) error {
+	for i := range router.routes {
+		route := router.routes[i]
+
+		for _, method := range route.GetMethodIterator() {
+			handler := route.GetMethodHandler(method)
+
+			if handler != nil {
+				for _, middleware := range router.globalMiddleware {
+					*handler = middleware(*handler)
+				}
+			}
 		}
 
-		if handle.method != nil && route.Path == r.URL.Path {
-			handle.method.ServeHTTP(w, r)
-		} else if route.DEFAULT.IsValid() {
-			route.DEFAULT.ServeHTTP(w, r)
-		} else {
-			http.Error(w, handle.error, handle.code)
-		}
+		http.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
+			err := route.Handler(w, r)
+			if err == nil || HtdMethod(r.Method) != GET {
+				return
+			}
+
+			if handler, ok := router.routes["*"]; ok {
+				if handler.Get != nil {
+					(*handler.Get).ServeHTTP(w, r)
+				}
+			}
+		})
 	}
 
-	http.HandleFunc(route.Path, routeFunc)
+	if err := http.ListenAndServe(":"+fmt.Sprint(port), nil); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func Route(f http.HandlerFunc) HtdHandler {
-	return HtdHandler{Handler: http.HandlerFunc(f)}
+func (h *HtdRouter) EnableBrowserReload() {
+	h.Use(BrowserSSERefreshMiddleware)
+	EnableBrowserSSEEvents()
 }
 
-func Page(f func() templ.Component) HtdHandler {
-	return HtdHandler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func Route(f http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(f)
+}
+
+func Page(f func() templ.Component) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf8")
-
 		if component := f().Render(context.Background(), w); component != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-	})}
+	})
 }
 
-func Redirect(path string) HtdHandler {
-	return HtdHandler{http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func Redirect(path string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("HX-Redirect", path)
 		http.Redirect(w, r, path, http.StatusFound)
-	})}
+	})
 }

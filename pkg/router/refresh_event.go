@@ -10,8 +10,8 @@ import (
 )
 
 // Handles sending a <script> tag that enables automatic browser refresh over SSE (Server Sent Events)
-func BrowserSSERefreshMiddleware(next HtdHandler) HtdHandler {
-	return HtdHandler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func BrowserSSERefreshMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)
 
 		// Add a script tag after handling the next event, in order to insert a <script> tag at the
@@ -23,10 +23,10 @@ func BrowserSSERefreshMiddleware(next HtdHandler) HtdHandler {
 				return
 			}
 		}
-	})}
+	})
 }
 
-func EnableBrowserSSEEvents(path string) {
+func EnableBrowserSSEEvents() {
 	eventHandler := func() http.HandlerFunc {
 		shouldReload := false
 
@@ -50,5 +50,5 @@ func EnableBrowserSSEEvents(path string) {
 
 	}
 
-	http.HandleFunc(path, eventHandler())
+	http.HandleFunc("/server/sent/event/browser/reload", eventHandler())
 }
