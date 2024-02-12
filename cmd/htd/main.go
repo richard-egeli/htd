@@ -43,41 +43,50 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("HX-Redirect", "/dashboard")
 }
 
+func testMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Test Middleware called from %s", r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Failed to load .env file")
 	}
 
-	htdRouter := router.Create()
-	htdSubRouter := htdRouter.Sub("/dashboard")
-
-	htdFileserver := router.HtdFileserver{Dir: "/static"}
-
 	loginData := pages.LoginData{
 		GenerateCSRFToken: csrf.Token,
-		Title:             "Hello, World",
+		Title:             "Login",
 	}
 
 	dashboardData := pages.DashboardData{
 		GenerateCSRFToken: csrf.Token,
 	}
 
-	htdRouter.Use(router.RefreshMiddleware)
-	htdRouter.Use(router.CSRFMiddleware)
-	htdRouter.Use(router.CorsMiddleware)
-
-	htdRouter.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
-	htdRouter.Post("/login", nil, router.Route(loginPost))
-	htdRouter.Post("/logout", nil, router.Redirect("/login"))
-	htdRouter.Get("/", nil, router.Redirect("/login"))
-	htdSubRouter.Get("/", nil, router.Page(pages.DashboardPage, &dashboardData))
-	htdRouter.Get("*", nil, router.Page(pages.NotFoundPage, nil))
-
-	htdFileserver.Create()
-
 	port := 8080
+	base := router.Create()
+	dashboard := base.Sub("/dashboard")
+
+	base.Use(router.RefreshMiddleware)
+	base.Use(router.CSRFMiddleware)
+	base.Use(router.CorsMiddleware)
+	base.Dir("/static")
+
+	dashboard.Use(testMiddleware)
+
+	// Main routes
+	base.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
+	base.Post("/login", nil, router.Route(loginPost))
+	base.Post("/logout", nil, router.Redirect("/login"))
+	base.Get("/", nil, router.Redirect("/login"))
+	base.Get("*", nil, router.Page(pages.NotFoundPage, nil))
+
+	// Dashboard sub routes
+	dashboard.Get("/", nil, router.Page(pages.DashboardPage, &dashboardData))
+
 	log.Printf("Serving files on http://localhost %d/", port)
-	if err := htdRouter.Listen(port); err != nil {
+	if err := base.Listen(port); err != nil {
 		log.Fatal(err)
 	}
 }

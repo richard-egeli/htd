@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -47,15 +48,20 @@ func (h *HtdRouter) getAbsolutePath(path string) string {
 		parent = parent.parent
 	}
 
-	return subPath + path
+	subPath = subPath + path
+	if len(subPath) > 1 {
+		subPath = "/" + strings.Trim(subPath, "/")
+	}
+
+	return subPath
 }
 
 func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []HtdMiddleware, handler http.Handler) error {
+	path = h.getAbsolutePath(path)
 	if route, ok := h.routes[path]; ok {
 		methodFunc := route.GetMethodHandler(method)
 
 		if methodFunc != nil {
-			log.Printf("Failed setting " + string(method))
 			return errors.New(string(method) + " already contains a route on path " + path)
 		}
 
@@ -80,25 +86,19 @@ func (h *HtdRouter) Post(path string, middlewares []HtdMiddleware, handler http.
 }
 
 func (h *HtdRouter) Get(path string, middlewares []HtdMiddleware, handler http.Handler) error {
-	return h.setMethod(GET, h.subPath+path, middlewares, handler)
+	return h.setMethod(GET, path, middlewares, handler)
 }
 
 func (router *HtdRouter) applyDefaultRoutesRecursive(defaultRoute *HtdRoute) {
 	for i := range router.routes {
 		route := router.routes[i]
-		path := route.Path
-
-		if len(path) > 1 {
-			path = "/" + strings.Trim(path, "/")
-		}
-
-		http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
 			err := route.Handler(w, r)
 			if err == nil {
 				return
 			}
 
-			log.Printf("Accessing unknown path '%s' -- '%v'", route.Path, err)
+			log.Printf("UNKNOWN-ROUTE-ACCESS: '%v'", err)
 			if defaultRoute != nil {
 				method := defaultRoute.GetMethodHandler(HtdMethod(r.Method))
 				if method != nil {
@@ -139,4 +139,19 @@ func (router *HtdRouter) applyMiddlewareRecursive(parentMiddleware *[]HtdMiddlew
 			subRouter.applyMiddlewareRecursive(parentMiddleware)
 		}
 	}
+}
+
+func (router *HtdRouter) Listen(port int) error {
+	router.applyMiddlewareRecursive(&router.globalMiddleware)
+	router.applyDefaultRoutesRecursive(router.routes["*"])
+
+	if router.fileDir != "" {
+		trimmed := strings.Trim(router.fileDir, "/")
+		slashed := "/" + trimmed + "/"
+
+		fs := http.FileServer(http.Dir(trimmed))
+		http.Handle(slashed, http.StripPrefix(slashed, fs))
+	}
+
+	return http.ListenAndServe(":"+fmt.Sprint(port), nil)
 }

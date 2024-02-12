@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -76,5 +77,5 @@ func (route *HtdRoute) Handler(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	return errors.New("HtdRoute failed checking URL path against Route path")
+	return errors.New(fmt.Sprintf("HtdRoute failed checking URL Path (%s) against Route Path (%s)", r.URL.Path, route.Path))
 }

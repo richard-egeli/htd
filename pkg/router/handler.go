@@ -2,17 +2,10 @@ package router
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/a-h/templ"
 )
-
-func (router *HtdRouter) Listen(port int) error {
-	router.applyMiddlewareRecursive(&router.globalMiddleware)
-	router.applyDefaultRoutesRecursive(router.routes["*"])
-	return http.ListenAndServe(":"+fmt.Sprint(port), nil)
-}
 
 func Route(f http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(f)
