@@ -1,9 +1,12 @@
 package pages
 
 import "github.com/richard-egeli/htd/views/layout"
+import "net/http"
 
-templ NotFoundPage() {
-@layout.BaseLayout("404 Not Found") {
+type NotFoundData struct{}
+
+templ NotFoundPage(w http.ResponseWriter, r *http.Request, _ *any) {
+@layout.BaseLayout("", "404 Not Found") {
 <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
   <div class="text-center">
     <p class="text-base font-semibold text-indigo-600">404</p>

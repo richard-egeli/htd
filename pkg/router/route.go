@@ -76,5 +76,5 @@ func (route *HtdRoute) Handler(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	return errors.New("Failed path checks")
+	return errors.New("HtdRoute failed checking URL path against Route path")
 }

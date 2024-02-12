@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/gorilla/csrf"
+	"github.com/joho/godotenv"
 	"github.com/richard-egeli/htd/pkg/router"
 	"github.com/richard-egeli/htd/views/pages"
 )
@@ -19,12 +20,6 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookies := r.Cookies()
-
-	for i, r := range cookies {
-		fmt.Printf("Index %d, Value %s", i, r)
-	}
-
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	cookie := http.Cookie{
@@ -32,7 +27,7 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 		Value:    "Go Programming",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteDefaultMode,
+		SameSite: http.SameSiteStrictMode,
 		MaxAge:   3600,
 	}
 
@@ -49,21 +44,40 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Failed to load .env file")
+	}
+
 	htdRouter := router.Create()
+	htdSubRouter := htdRouter.Sub("/dashboard")
+
 	htdFileserver := router.HtdFileserver{Dir: "/static"}
 
-	htdRouter.EnableBrowserReload()
-	htdRouter.Get("/login", nil, router.Page(pages.LoginPage))
+	loginData := pages.LoginData{
+		GenerateCSRFToken: csrf.Token,
+		Title:             "Hello, World",
+	}
+
+	dashboardData := pages.DashboardData{
+		GenerateCSRFToken: csrf.Token,
+	}
+
+	htdRouter.Use(router.RefreshMiddleware)
+	htdRouter.Use(router.CSRFMiddleware)
+	htdRouter.Use(router.CorsMiddleware)
+
+	htdRouter.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
 	htdRouter.Post("/login", nil, router.Route(loginPost))
+	htdRouter.Post("/logout", nil, router.Redirect("/login"))
 	htdRouter.Get("/", nil, router.Redirect("/login"))
-	htdRouter.Get("*", nil, router.Page(pages.NotFoundPage))
+	htdSubRouter.Get("/", nil, router.Page(pages.DashboardPage, &dashboardData))
+	htdRouter.Get("*", nil, router.Page(pages.NotFoundPage, nil))
 
 	htdFileserver.Create()
 
-	port := ":8080"
-	log.Printf("Serving files on http://localhost %s/", port)
-
-	if err := htdRouter.Listen(8080); err != nil {
+	port := 8080
+	log.Printf("Serving files on http://localhost %d/", port)
+	if err := htdRouter.Listen(port); err != nil {
 		log.Fatal(err)
 	}
 }

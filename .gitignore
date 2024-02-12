@@ -1,3 +1,5 @@
 tmp/
+.git/
 
 tailwindcss
+.env

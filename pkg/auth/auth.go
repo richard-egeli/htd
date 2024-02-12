@@ -1,6 +1,9 @@
 package auth
 
-import "errors"
+import (
+	"crypto/rand"
+	"errors"
+)
 
 type AuthCookie struct {
 	UserID         string
@@ -19,4 +22,16 @@ func (store *AuthStore) Insert(client AuthCookie) error {
 	}
 
 	return nil
+}
+
+func GenerateToken() ([]byte, error) {
+	b := make([]byte, 32)
+
+	_, err := rand.Read(b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }

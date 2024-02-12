@@ -1,42 +1,66 @@
 package router
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/a-h/templ"
+	"strings"
 )
 
 type HtdRouter struct {
 	globalMiddleware []HtdMiddleware
 	routes           map[string]*HtdRoute
+	parent           *HtdRouter
+	subRouters       []*HtdRouter
+	subPath          string
+	fileDir          string
 }
 
-func Create() HtdRouter {
-	return HtdRouter{
-		routes: make(map[string]*HtdRoute),
-	}
+func Create() *HtdRouter {
+	router := new(HtdRouter)
+	router.routes = make(map[string]*HtdRoute)
+	return router
+}
+
+func (h *HtdRouter) Dir(dir string) {
+	h.fileDir = dir
 }
 
 func (h *HtdRouter) Use(m HtdMiddleware) {
 	h.globalMiddleware = append(h.globalMiddleware, m)
 }
 
+func (h *HtdRouter) Sub(path string) *HtdRouter {
+	sub := Create()
+	sub.parent = h
+	sub.subPath = path
+	h.subRouters = append(h.subRouters, sub)
+	return sub
+}
+
+func (h *HtdRouter) getAbsolutePath(path string) string {
+	subPath := h.subPath
+	parent := h.parent
+
+	for parent != nil {
+		subPath = parent.subPath + subPath
+		parent = parent.parent
+	}
+
+	return subPath + path
+}
+
 func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []HtdMiddleware, handler http.Handler) error {
 	if route, ok := h.routes[path]; ok {
 		methodFunc := route.GetMethodHandler(method)
+
 		if methodFunc != nil {
 			log.Printf("Failed setting " + string(method))
 			return errors.New(string(method) + " already contains a route on path " + path)
 		}
-		route.SetMethodHandler(method, handler)
-		log.Printf("Setting POST request " + string(method))
 
+		route.SetMethodHandler(method, handler)
 	} else {
-		log.Printf("Creating new " + string(method) + " On path " + path)
 		newRoute := HtdRoute{Path: path}
 		newRoute.SetMethodHandler(method, handler)
 		h.routes[path] = &newRoute
@@ -56,66 +80,63 @@ func (h *HtdRouter) Post(path string, middlewares []HtdMiddleware, handler http.
 }
 
 func (h *HtdRouter) Get(path string, middlewares []HtdMiddleware, handler http.Handler) error {
-	return h.setMethod(GET, path, middlewares, handler)
+	return h.setMethod(GET, h.subPath+path, middlewares, handler)
 }
 
-func (router *HtdRouter) Listen(port int) error {
+func (router *HtdRouter) applyDefaultRoutesRecursive(defaultRoute *HtdRoute) {
 	for i := range router.routes {
 		route := router.routes[i]
+		path := route.Path
 
-		for _, method := range route.GetMethodIterator() {
-			handler := route.GetMethodHandler(method)
-
-			if handler != nil {
-				for _, middleware := range router.globalMiddleware {
-					*handler = middleware(*handler)
-				}
-			}
+		if len(path) > 1 {
+			path = "/" + strings.Trim(path, "/")
 		}
 
-		http.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 			err := route.Handler(w, r)
-			if err == nil || HtdMethod(r.Method) != GET {
+			if err == nil {
 				return
 			}
 
-			if handler, ok := router.routes["*"]; ok {
-				if handler.Get != nil {
-					(*handler.Get).ServeHTTP(w, r)
+			log.Printf("Accessing unknown path '%s' -- '%v'", route.Path, err)
+			if defaultRoute != nil {
+				method := defaultRoute.GetMethodHandler(HtdMethod(r.Method))
+				if method != nil {
+					(*method).ServeHTTP(w, r)
 				}
 			}
 		})
 	}
 
-	if err := http.ListenAndServe(":"+fmt.Sprint(port), nil); err != nil {
-		return err
+	for i := range router.subRouters {
+		route := router.subRouters[i]
+		route.applyDefaultRoutesRecursive(defaultRoute)
+	}
+}
+
+func (router *HtdRouter) applyMiddlewareRecursive(parentMiddleware *[]HtdMiddleware) {
+	if parentMiddleware == nil {
+		return
 	}
 
-	return nil
-}
+	for i := range router.routes {
+		route := router.routes[i]
 
-func (h *HtdRouter) EnableBrowserReload() {
-	h.Use(BrowserSSERefreshMiddleware)
-	EnableBrowserSSEEvents()
-}
-
-func Route(f http.HandlerFunc) http.Handler {
-	return http.HandlerFunc(f)
-}
-
-func Page(f func() templ.Component) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf8")
-		if component := f().Render(context.Background(), w); component != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+		for _, j := range route.GetMethodIterator() {
+			if handle := route.GetMethodHandler(j); handle != nil {
+				for _, mw := range *parentMiddleware {
+					*handle = mw(*handle)
+				}
+			}
 		}
-	})
-}
+	}
 
-func Redirect(path string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("HX-Redirect", path)
-		http.Redirect(w, r, path, http.StatusFound)
-	})
+	for i := range router.subRouters {
+		subRouter := router.subRouters[i]
+		subRouter.applyMiddlewareRecursive(&subRouter.globalMiddleware)
+
+		if parentMiddleware != nil {
+			subRouter.applyMiddlewareRecursive(parentMiddleware)
+		}
+	}
 }

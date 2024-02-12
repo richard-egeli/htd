@@ -1,42 +1,51 @@
 package pages
 
 import "github.com/richard-egeli/htd/views/layout"
+import "net/http"
 
-templ dashboardButton(text string, attributes templ.Attributes) {
+type DashboardData struct {
+	GenerateCSRFToken func(r *http.Request) string
+}
+
+templ dashboardButton( text string, attributes templ.Attributes) {
 	<li class="pl-5">
 		<a href="#" { attributes... }>{ text }</a>
 	</li>
 }
 
-templ DashboardPage() {
-	@layout.BaseLayout("Dashboard Page") {
+templ dashboardContent(token string) {
+	<div class="w-64 h-screen bg-gray-800 text-white flex flex-col justify-between">
+		<!-- Sidebar with flex container -->
+		<div>
+			<!-- Main menu items -->
+			<h1 class="text-xl font-semibold p-5">Menu</h1>
+			<ul class="space-y-2">
+				@dashboardButton("Home", templ.Attributes{})
+				@dashboardButton("About", templ.Attributes{})
+				@dashboardButton("Services", templ.Attributes{})
+				@dashboardButton("Contact", templ.Attributes{})
+			</ul>
+		</div>
+		<div class="pb-5">
+			<!-- Bottom-aligned items -->
+			<ul class="space-y-2">
+				@dashboardButton("Settings", templ.Attributes{})
+				@dashboardButton("Logout", templ.Attributes{"hx-post": "/logout", "hx-target": "body", "hx-push-url": "true",
+					"hx-swap": "outerHTML"})
+			</ul>
+		</div>
+	</div>
+	<div class="flex-1 p-10">
+		<!-- Main content -->
+		<h1 class="text-3xl font-bold mb-4">Main Content</h1>
+		<p>This is the main content area.</p>
+	</div>
+}
+
+templ DashboardPage(w http.ResponseWriter, r *http.Request, data *DashboardData) {
+	@layout.BaseLayout(data.GenerateCSRFToken(r), "Dashboard Page") {
 		<main class="flex">
-			<div class="w-64 h-screen bg-gray-800 text-white flex flex-col justify-between">
-				<!-- Sidebar with flex container -->
-				<div>
-					<!-- Main menu items -->
-					<h1 class="text-xl font-semibold p-5">Menu</h1>
-					<ul class="space-y-2">
-						@dashboardButton("Home", templ.Attributes{})
-						@dashboardButton("About", templ.Attributes{})
-						@dashboardButton("Services", templ.Attributes{})
-						@dashboardButton("Contact", templ.Attributes{})
-					</ul>
-				</div>
-				<div class="pb-5">
-					<!-- Bottom-aligned items -->
-					<ul class="space-y-2">
-						@dashboardButton("Settings", templ.Attributes{})
-						@dashboardButton("Logout", templ.Attributes{"hx-post": "/logout", "hx-target": "body", "hx-push-url": "true",
-							"hx-swap": "outerHTML"})
-					</ul>
-				</div>
-			</div>
-			<div class="flex-1 p-10">
-				<!-- Main content -->
-				<h1 class="text-3xl font-bold mb-4">Main Content</h1>
-				<p>This is the main content area.</p>
-			</div>
+			@dashboardContent(data.GenerateCSRFToken(r))
 		</main>
 	}
 }

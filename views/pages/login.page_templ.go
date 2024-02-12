@@ -12,8 +12,14 @@ import "bytes"
 
 import "github.com/richard-egeli/htd/views/components"
 import "github.com/richard-egeli/htd/views/layout"
+import "net/http"
 
-func LoginPage() templ.Component {
+type LoginData struct {
+	GenerateCSRFToken func(r *http.Request) string
+	Title             string
+}
+
+func LoginPage(w http.ResponseWriter, r *http.Request, data *LoginData) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -57,7 +63,7 @@ func LoginPage() templ.Component {
 			}
 			return templ_7745c5c3_Err
 		})
-		templ_7745c5c3_Err = layout.BaseLayout("Login Page").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.BaseLayout(data.GenerateCSRFToken(r), data.Title).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
