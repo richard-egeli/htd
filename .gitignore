@@ -3,3 +3,6 @@ tmp/
 
 tailwindcss
 .env
+
+# CSS Tailwind Styling
+static/output.css
