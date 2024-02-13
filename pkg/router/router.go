@@ -2,7 +2,6 @@ package router
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -141,7 +140,7 @@ func (router *HtdRouter) applyMiddlewareRecursive(parentMiddleware *[]HtdMiddlew
 	}
 }
 
-func (router *HtdRouter) Listen(port int) error {
+func (router *HtdRouter) Listen(port string) error {
 	router.applyMiddlewareRecursive(&router.globalMiddleware)
 	router.applyDefaultRoutesRecursive(router.routes["*"])
 
@@ -153,5 +152,5 @@ func (router *HtdRouter) Listen(port int) error {
 		http.Handle(slashed, http.StripPrefix(slashed, fs))
 	}
 
-	return http.ListenAndServe(":"+fmt.Sprint(port), nil)
+	return http.ListenAndServe(":"+port, nil)
 }

@@ -1,9 +1,9 @@
 root = "."
-tmp_dir = "tmp"
+tmp_dir = "build"
 
 [build]
-  bin = "./tmp/main"
-  cmd = "templ generate && go build -o ./tmp/main ./cmd/htd/main.go"
+  bin = "./build/main"
+  cmd = "templ generate && go build -o ./build/main ./cmd/htd/main.go"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor"]
   exclude_file = []

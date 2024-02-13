@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/gorilla/csrf"
 	"github.com/joho/godotenv"
@@ -50,10 +54,33 @@ func testMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func InitDB() {
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	bytes, err := os.ReadFile("./sql/create_table.sql")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	createTable := string(bytes)
+
+	_, err = db.Exec(createTable)
+	if err != nil {
+		log.Printf("%q: %s\n", err, createTable)
+		return
+	}
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Failed to load .env file")
 	}
+
+	InitDB()
 
 	loginData := pages.LoginData{
 		GenerateCSRFToken: csrf.Token,
@@ -84,9 +111,10 @@ func main() {
 
 	// Dashboard sub routes
 	dashboard.Get("/", nil, router.Page(pages.DashboardPage, &dashboardData))
+	dashboard.Get("/pages", nil, router.Page(pages.Pages, &pages.PagesData{DashboardData: &dashboardData}))
 
 	log.Printf("Serving files on http://localhost %d/", port)
-	if err := base.Listen(port); err != nil {
+	if err := base.Listen(os.Getenv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
 	}
 }

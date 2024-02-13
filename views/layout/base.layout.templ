@@ -1,22 +1,26 @@
 package layout
 
 templ BaseLayout(token, title string) {
-	<!DOCTYPE html>
-	<html lang="en" data-theme="dark">
-		<head>
-			<meta charset="utf-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<meta name="csrf" content={ token }/>
-			<title>{ title }</title>
-			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
-			<script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
-			<script src="https://cdn.tailwindcss.com"></script>
-			<link href="/static/style.css" rel="stylesheet"/>
-			<link rel="icon" href="/static/favicon.ico" type="image/x-icon"/>
-		</head>
-		<body>
-			{ children... }
-			<script>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="csrf" content={ token } />
+  <title>{ title }</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"
+    integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="/static/style.css" rel="stylesheet" />
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+</head>
+
+<body>
+  { children... }
+  <script>
     try {
       document.body.addEventListener('htmx:configRequest', (event) => {
         const token = document.querySelector('meta[name="csrf"]').getAttribute('content');
@@ -24,6 +28,7 @@ templ BaseLayout(token, title string) {
       })
     } catch (_) { }
   </script>
-		</body>
-	</html>
+</body>
+
+</html>
 }

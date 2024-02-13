@@ -1,0 +1,24 @@
+package pages
+
+import "net/http"
+import "github.com/richard-egeli/htd/views/layout"
+
+type PagesData struct {
+DashboardData *DashboardData
+}
+
+templ Pages(w http.ResponseWriter, r*http.Request, data *PagesData) {
+if r.Header.Get("HX-Request") == "true" {
+<div>
+  Welcome to my Page Builder
+</div>
+} else {
+@layout.BaseLayout("", "Pages") {
+@DashboardPage(w, r, data.DashboardData) {
+<div>
+  Welcome to my Page Builder
+</div>
+}
+}
+}
+}
