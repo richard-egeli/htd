@@ -1,0 +1,18 @@
+apiVersion: 0.0.1
+repoURL: "https://github.com/richard-egeli/gochangelog"
+commitPath: "/commit"
+comparePath: "/compare"
+
+filter:
+  - fix
+  - feat
+  - BREAKING CHANGE
+  - build
+  - chore
+  - ci
+  - docs
+  - style
+  - refactor
+  - perf
+  - test
+
