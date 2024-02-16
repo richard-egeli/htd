@@ -3,6 +3,7 @@ repoURL: "https://github.com/richard-egeli/gochangelog"
 commitPath: "/commit"
 comparePath: "/compare"
 
+
 filter:
   - fix
   - feat
