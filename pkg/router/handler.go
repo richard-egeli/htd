@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/a-h/templ"
@@ -14,6 +15,8 @@ func Route(f http.HandlerFunc) http.Handler {
 func Page[T any](page func(http.ResponseWriter, *http.Request, *T) templ.Component, data *T) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf8")
+
+		log.Printf("Rendering page at %s", r.URL.Path)
 
 		if component := page(w, r, data).Render(context.Background(), w); component != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

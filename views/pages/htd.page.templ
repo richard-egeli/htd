@@ -1,0 +1,67 @@
+package pages
+
+import "github.com/richard-egeli/htd/views/layout"
+import "net/http"
+
+type HtdData struct {
+Name string
+GenerateCSRFToken func(r *http.Request) string
+}
+
+templ htdButton( text string, attributes templ.Attributes) {
+<li class="pl-5">
+  <a href="#" { attributes... }>{ text }</a>
+</li>
+}
+
+func getAttribs(route string) templ.Attributes {
+return templ.Attributes{
+"hx-get": route,
+"hx-target": "#main-content-area",
+"hx-swap": "innerHTML",
+"hx-push-url": "true",
+}
+}
+
+func postAttribs(route string) templ.Attributes {
+return templ.Attributes{
+"hx-post": route,
+"hx-target": body,
+"hx-push-url": "true",
+"hx-swap": "outerHTML",
+}
+}
+
+templ htdContent(name string) {
+<div class="w-64 h-screen bg-gray-800 text-white flex flex-col justify-between">
+  <div>
+    <h1 class="text-xl font-semibold p-5">Menu</h1>
+    <ul class="space-y-2">
+      @htdButton("Home", getAttribs("/"+name+"/home"))
+      @htdButton("About", getAttribs("/"+name+"/about"))
+      @htdButton("Pages", getAttribs("/"+name+"/pages"))
+      @htdButton("Contact", getAttribs("/"+name+"/contact"))
+    </ul>
+  </div>
+  <div class="pb-5">
+    <ul class="space-y-2">
+      @htdButton("Settings", templ.Attributes{})
+      @htdButton("Logout", templ.Attributes{"hx-post": "/logout", "hx-target": "body", "hx-push-url": "true",
+      "hx-swap": "outerHTML"})
+    </ul>
+  </div>
+</div>
+<div class="flex-1 p-10" id="main-content-area">
+  { children... }
+</div>
+}
+
+templ HtdPage(w http.ResponseWriter, r *http.Request, data *HtdData) {
+@layout.BaseLayout(data.GenerateCSRFToken(r), "Dashboard Page") {
+<main class="flex">
+  @htdContent(data.Name) {
+  { children... }
+  }
+</main>
+}
+}

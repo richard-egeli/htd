@@ -44,7 +44,7 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &cookie)
-	w.Header().Add("HX-Redirect", "/dashboard")
+	w.Header().Add("HX-Redirect", "/htd")
 }
 
 func testMiddleware(next http.Handler) http.Handler {
@@ -87,20 +87,21 @@ func main() {
 		Title:             "Login",
 	}
 
-	dashboardData := pages.DashboardData{
+	htdData := pages.HtdData{
+		Name:              "htd",
 		GenerateCSRFToken: csrf.Token,
 	}
 
 	port := 8080
 	base := router.Create()
-	dashboard := base.Sub("/dashboard")
+	htd := base.Sub("/" + htdData.Name)
 
 	base.Use(router.RefreshMiddleware)
 	base.Use(router.CSRFMiddleware)
 	base.Use(router.CorsMiddleware)
 	base.Dir("/static")
 
-	dashboard.Use(testMiddleware)
+	htd.Use(testMiddleware)
 
 	// Main routes
 	base.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
@@ -110,8 +111,8 @@ func main() {
 	base.Get("*", nil, router.Page(pages.NotFoundPage, nil))
 
 	// Dashboard sub routes
-	dashboard.Get("/", nil, router.Page(pages.DashboardPage, &dashboardData))
-	dashboard.Get("/pages", nil, router.Page(pages.Pages, &pages.PagesData{DashboardData: &dashboardData}))
+	htd.Get("/", nil, router.Page(pages.HtdPage, &htdData))
+	htd.Get("/pages", nil, router.Page(pages.Pages, &pages.PagesData{HtdData: &htdData}))
 
 	log.Printf("Serving files on http://localhost %d/", port)
 	if err := base.Listen(os.Getenv("SERVER_PORT")); err != nil {

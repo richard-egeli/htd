@@ -1,3 +1,11 @@
+pre,
+code,
+kbd,
+samp {
+  font-family: Menlo, Consolas, "Courier New", monospace;
+}
+
+
 .sign-in-button-text {
   display: block;
 }

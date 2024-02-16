@@ -44,7 +44,7 @@ func BaseLayout(token, title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><script src=\"https://unpkg.com/htmx.org@1.9.10\" integrity=\"sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC\" crossorigin=\"anonymous\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/sse.js\"></script><script src=\"https://cdn.tailwindcss.com\"></script><link href=\"/static/style.css\" rel=\"stylesheet\"><link rel=\"icon\" href=\"/static/favicon.ico\" type=\"image/x-icon\"></head><body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><script src=\"https://unpkg.com/htmx.org@1.9.10\" integrity=\"sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC\" crossorigin=\"anonymous\"></script><script src=\"https://unpkg.com/htmx.org/dist/ext/sse.js\"></script><script src=\"https://cdn.tailwindcss.com\"></script><link href=\"/static/style.css\" rel=\"stylesheet\"><link rel=\"icon\" href=\"/static/favicon.ico\" type=\"image/x-icon\"><script src=\"https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest\"></script><script src=\"/static/editor/index.js\" type=\"module\"></script></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
