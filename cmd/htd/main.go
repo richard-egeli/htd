@@ -47,13 +47,6 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("HX-Redirect", "/htd")
 }
 
-func testMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Test Middleware called from %s", r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
-}
-
 func InitDB() {
 	db, err := sql.Open("sqlite3", "./foo.db")
 	if err != nil {
@@ -100,8 +93,6 @@ func main() {
 	base.Use(router.CSRFMiddleware)
 	base.Use(router.CorsMiddleware)
 	base.Dir("/static")
-
-	htd.Use(testMiddleware)
 
 	// Main routes
 	base.Get("/login", nil, router.Page(pages.LoginPage, &loginData))

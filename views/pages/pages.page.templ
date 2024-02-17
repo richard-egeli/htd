@@ -1,31 +1,26 @@
 package pages
 
 import "net/http"
-import "github.com/richard-egeli/htd/views/layout"
 
 type PagesData struct {
-	HtdData *HtdData
+HtdData *HtdData
 }
 
 templ body() {
-	<body>
-		<pre id="hello" style="white-space: pre-wrap;">
-			Welcome to my page builder
-		</pre>
-		<pre id="bye">
-			Element to drag behind
-		</pre>
-	</body>
+
+<body>
+  <p id="hello" style="min-height: 24px;">
+    Welcome to my page builder
+  </p>
+</body>
 }
 
 templ Pages(w http.ResponseWriter, r*http.Request, data *PagesData) {
-	if r.Header.Get("HX-Request") == "true" {
-		@body()
-	} else {
-		@layout.BaseLayout(data.HtdData.GenerateCSRFToken(r), "Pages") {
-			@HtdPage(w, r, data.HtdData) {
-				@body()
-			}
-		}
-	}
+if r.Header.Get("HX-Request") == "true" {
+@body()
+} else {
+@HtdPage(w, r, data.HtdData) {
+@body()
+}
+}
 }

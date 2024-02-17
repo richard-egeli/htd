@@ -11,7 +11,6 @@ import "io"
 import "bytes"
 
 import "net/http"
-import "github.com/richard-egeli/htd/views/layout"
 
 type PagesData struct {
 	HtdData *HtdData
@@ -30,7 +29,7 @@ func body() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body><pre id=\"hello\" style=\"white-space: pre-wrap;\">Welcome to my page builder</pre><pre id=\"bye\">Element to drag behind</pre></body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body><p id=\"hello\" style=\"min-height: 24px;\">Welcome to my page builder</p></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -66,22 +65,7 @@ func Pages(w http.ResponseWriter, r *http.Request, data *PagesData) templ.Compon
 					templ_7745c5c3_Buffer = templ.GetBuffer()
 					defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 				}
-				templ_7745c5c3_Var4 := templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-					if !templ_7745c5c3_IsBuffer {
-						templ_7745c5c3_Buffer = templ.GetBuffer()
-						defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-					}
-					templ_7745c5c3_Err = body().Render(ctx, templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if !templ_7745c5c3_IsBuffer {
-						_, templ_7745c5c3_Err = io.Copy(templ_7745c5c3_W, templ_7745c5c3_Buffer)
-					}
-					return templ_7745c5c3_Err
-				})
-				templ_7745c5c3_Err = HtdPage(w, r, data.HtdData).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = body().Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -90,7 +74,7 @@ func Pages(w http.ResponseWriter, r *http.Request, data *PagesData) templ.Compon
 				}
 				return templ_7745c5c3_Err
 			})
-			templ_7745c5c3_Err = layout.BaseLayout(data.HtdData.GenerateCSRFToken(r), "Pages").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = HtdPage(w, r, data.HtdData).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
