@@ -1,3 +1,5 @@
+import command from "./command.js";
+import HTMLTextEditMenu from "./HTMLTextEditMenu.js";
 
 
 export default class HTMLTextEditElement extends HTMLElement {
@@ -12,18 +14,9 @@ export default class HTMLTextEditElement extends HTMLElement {
   menu = null
 
   /**
-   * @param {HTMLElement} element
-   * @returns bool if it's a valid text element 
-   */
-  validTextElement(element) {
-    return element && ["P", "PRE", "SPAN", "H1", "H2", "H3", "H4", "H5", "H6", "H7"].includes(element.nodeName.toUpperCase());
-  }
-
-  /**
    * @param {HTMLElement} target
    */
   addClickEvent(target) {
-    console.log(target);
     const callback = function(event) {
       this.setTarget(event.target);
     }.bind(this);
@@ -111,7 +104,7 @@ export default class HTMLTextEditElement extends HTMLElement {
 
     selection.removeAllRanges();
     selection.addRange(range);
-    document.execCommand('delete');
+    command('delete');
   }
 
   /**
@@ -177,8 +170,7 @@ export default class HTMLTextEditElement extends HTMLElement {
    * @param {HTMLElement} target
    */
   setTarget(target) {
-    console.log(target);
-    if (!this.validTextElement(target) || this.target === target) return;
+    if (!target || target.nodeName !== "P" || this.target === target) return;
 
     if (this.target) {
       this.target.removeEventListener('keydown', this.boundHandleKeys);
@@ -209,4 +201,3 @@ export default class HTMLTextEditElement extends HTMLElement {
 }
 
 customElements.define("text-edit", HTMLTextEditElement);
-customElements.define("text-edit-menu", HTMLTextEditMenu);

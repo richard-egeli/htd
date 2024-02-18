@@ -1,6 +1,6 @@
 import { registerCallback } from "./caller.js";
 
-import './HTMLTextEditorElement.js'
+import './HTMLTextEditElement.js'
 
 
 registerCallback();
