@@ -69,6 +69,17 @@ func (route *HtdRoute) GetMethodHandler(method HtdMethod) *http.Handler {
 	}
 }
 
+func (route *HtdRoute) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handler := route.GetMethodHandler(HtdMethod(r.Method))
+
+	if handler != nil {
+		(*handler).ServeHTTP(w, r)
+		return
+	}
+
+	http.Error(w, "Bad Request", http.StatusBadRequest)
+}
+
 func (route *HtdRoute) Handler(w http.ResponseWriter, r *http.Request) error {
 	handler := route.GetMethodHandler(HtdMethod(r.Method))
 

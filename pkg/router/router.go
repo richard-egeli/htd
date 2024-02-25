@@ -2,13 +2,13 @@ package router
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 )
 
 type HtdRouter struct {
-	globalMiddleware []HtdMiddleware
+	mux              *http.ServeMux
+	globalMiddleware []Middleware
 	routes           map[string]*HtdRoute
 	parent           *HtdRouter
 	subRouters       []*HtdRouter
@@ -19,6 +19,7 @@ type HtdRouter struct {
 func Create() *HtdRouter {
 	router := new(HtdRouter)
 	router.routes = make(map[string]*HtdRoute)
+	router.mux = http.NewServeMux()
 	return router
 }
 
@@ -26,7 +27,7 @@ func (h *HtdRouter) Dir(dir string) {
 	h.fileDir = dir
 }
 
-func (h *HtdRouter) Use(m HtdMiddleware) {
+func (h *HtdRouter) Use(m Middleware) {
 	h.globalMiddleware = append(h.globalMiddleware, m)
 }
 
@@ -55,7 +56,7 @@ func (h *HtdRouter) getAbsolutePath(path string) string {
 	return subPath
 }
 
-func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []HtdMiddleware, handler http.Handler) error {
+func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []Middleware, handler http.Handler) error {
 	path = h.getAbsolutePath(path)
 	if route, ok := h.routes[path]; ok {
 		methodFunc := route.GetMethodHandler(method)
@@ -80,24 +81,23 @@ func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []HtdMiddleware,
 	return nil
 }
 
-func (h *HtdRouter) Post(path string, middlewares []HtdMiddleware, handler http.Handler) error {
+func (h *HtdRouter) Post(path string, middlewares []Middleware, handler http.Handler) error {
 	return h.setMethod(POST, path, middlewares, handler)
 }
 
-func (h *HtdRouter) Get(path string, middlewares []HtdMiddleware, handler http.Handler) error {
+func (h *HtdRouter) Get(path string, middlewares []Middleware, handler http.Handler) error {
 	return h.setMethod(GET, path, middlewares, handler)
 }
 
 func (router *HtdRouter) applyDefaultRoutesRecursive(defaultRoute *HtdRoute) {
 	for i := range router.routes {
 		route := router.routes[i]
-		http.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
+		router.mux.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
 			err := route.Handler(w, r)
 			if err == nil {
 				return
 			}
 
-			log.Printf("UNKNOWN-ROUTE-ACCESS: '%v'", err)
 			if defaultRoute != nil {
 				method := defaultRoute.GetMethodHandler(HtdMethod(r.Method))
 				if method != nil {
@@ -113,7 +113,7 @@ func (router *HtdRouter) applyDefaultRoutesRecursive(defaultRoute *HtdRoute) {
 	}
 }
 
-func (router *HtdRouter) applyMiddlewareRecursive(parentMiddleware *[]HtdMiddleware) {
+func (router *HtdRouter) applyMiddlewareRecursive(parentMiddleware *[]Middleware) {
 	if parentMiddleware == nil {
 		return
 	}
@@ -149,8 +149,9 @@ func (router *HtdRouter) Listen(port string) error {
 		slashed := "/" + trimmed + "/"
 
 		fs := http.FileServer(http.Dir(trimmed))
-		http.Handle(slashed, http.StripPrefix(slashed, fs))
+
+		router.mux.Handle(slashed, GzipMiddleware(http.StripPrefix(slashed, fs)))
 	}
 
-	return http.ListenAndServe(":"+port, nil)
+	return http.ListenAndServe(":"+port, router.mux)
 }

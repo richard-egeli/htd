@@ -12,7 +12,7 @@ import (
 var initialized = false
 
 // Handles sending a <script> tag that enables automatic browser refresh over SSE (Server Sent Events)
-func RefreshMiddleware(next http.Handler) http.Handler {
+func (router *Router) RefreshMiddleware(next http.Handler) http.Handler {
 	if !initialized {
 		eventHandler := func() http.HandlerFunc {
 			shouldReload := false
@@ -36,7 +36,7 @@ func RefreshMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		http.HandleFunc("/server/sent/event/browser/reload", eventHandler())
+		router.mux.HandleFunc("GET /server/sent/event/browser/reload", eventHandler())
 		initialized = true
 	}
 

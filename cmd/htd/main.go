@@ -6,18 +6,17 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
-
-	_ "github.com/mattn/go-sqlite3"
+	"strings"
 
 	"github.com/gorilla/csrf"
+	_ "github.com/mattn/go-sqlite3"
+
 	"github.com/joho/godotenv"
 	"github.com/richard-egeli/htd/pkg/router"
 	"github.com/richard-egeli/htd/views/pages"
 )
 
 func loginPost(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(3 * time.Second)
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Failed to parse form input", http.StatusInternalServerError)
@@ -44,7 +43,7 @@ func loginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &cookie)
-	w.Header().Add("HX-Redirect", "/htd")
+	w.Header().Add("HX-Redirect", "/dashboard")
 }
 
 func InitDB() {
@@ -68,12 +67,36 @@ func InitDB() {
 	}
 }
 
+func DashboardRouteMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/dashboard" && r.URL.Path != "/dashboard/" {
+			w.Header().Add("Content-Type", "text/html; charset=utf8")
+			pages.NotFoundPage(w, r, nil).Render(context.Background(), w)
+			log.Println("Not Found Page")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func DefaultRouteMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/") && len(r.URL.Path) > 1 {
+			w.Header().Add("Content-Type", "text/html; charset=utf8")
+			pages.NotFoundPage(w, r, nil).Render(context.Background(), w)
+			log.Println("Not Found Page")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Failed to load .env file")
 	}
-
-	InitDB()
 
 	loginData := pages.LoginData{
 		GenerateCSRFToken: csrf.Token,
@@ -85,28 +108,21 @@ func main() {
 		GenerateCSRFToken: csrf.Token,
 	}
 
-	port := 8080
-	base := router.Create()
-	htd := base.Sub("/" + htdData.Name)
+	base := router.New()
+	dash := base.Sub("dashboard")
 
-	base.Use(router.RefreshMiddleware)
+	base.Use(base.RefreshMiddleware)
 	base.Use(router.CSRFMiddleware)
 	base.Use(router.CorsMiddleware)
-	base.Dir("/static")
+	base.Use(router.GzipMiddleware)
 
-	// Main routes
-	base.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
+	base.Dir("/scripts/", "./web/src", []router.Middleware{router.TypescriptTranspilationMiddleware})
+	base.Dir("/static/", "./static", nil)
+
 	base.Post("/login", nil, router.Route(loginPost))
-	base.Post("/logout", nil, router.Redirect("/login"))
-	base.Get("/", nil, router.Redirect("/login"))
-	base.Get("*", nil, router.Page(pages.NotFoundPage, nil))
 
-	// Dashboard sub routes
-	htd.Get("/", nil, router.Page(pages.HtdPage, &htdData))
-	htd.Get("/pages", nil, router.Page(pages.Pages, &pages.PagesData{HtdData: &htdData}))
+	dash.Get("/", []router.Middleware{DashboardRouteMiddleware}, router.Page(pages.HtdPage, &htdData))
+	base.Get("/", []router.Middleware{DefaultRouteMiddleware}, router.Page(pages.LoginPage, &loginData))
 
-	log.Printf("Serving files on http://localhost %d/", port)
-	if err := base.Listen(os.Getenv("SERVER_PORT")); err != nil {
-		log.Fatal(err)
-	}
+	base.Listen("8080")
 }

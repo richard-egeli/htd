@@ -1,5 +1,8 @@
 
-import command from "./command.js";
+import HTMLTextEditElement from "./HTMLTextEditElement.js";
+import executeCommand from "./command.js";
+
+import { createFontTypeForm as createTextTypeForm } from "./components/forms.js";
 
 const configFonts = ["ui-monospace",
   "SFMono-Regular",
@@ -28,7 +31,6 @@ function getFontSize() {
   const computedStyle = window.getComputedStyle(element);
   return computedStyle.fontSize;
 }
-
 
 /**
  * @param {string} name
@@ -64,7 +66,7 @@ function createFontSizeForm() {
 
   form.appendChild(label);
   form.appendChild(select);
-  form.onchange = (e) => command('fontSize', e.target.value);
+  form.onchange = (e) => executeCommand('fontSize', e.target.value);
   return form;
 }
 
@@ -84,6 +86,19 @@ export default class HTMLTextEditMenu extends HTMLElement {
     }
   }
 
+  updateTextType(event) {
+    event.preventDefault();
+
+    const type = event.target.value;
+    const element = document.createElement(type);
+
+    Array.from(this.target.attributes).forEach(attr => element.setAttribute(attr.name, attr.value));
+    while (this.target.firstChild) element.appendChild(this.target.firstChild);
+
+    this.target.parentNode.replaceChild(element, this.target);
+    this.parent.setTarget(element);
+  }
+
   updateFontOptions(fonts) {
     this.removeFontOptions();
 
@@ -98,18 +113,26 @@ export default class HTMLTextEditMenu extends HTMLElement {
     });
   }
 
-  setSelectionBold(event) {
+  /**
+   * @param {Event} event
+   */
+  onBoldButtonClicked(event) {
     event.preventDefault();
-    command('bold');
+    executeCommand('bold');
   }
 
   setSelectionFont(event) {
     event.preventDefault();
-    command('fontName', font);
+    executeCommand('fontName', font);
   }
 
-  initialize() {
+  /**
+  * @param {HTMLTextEditElement} parent
+  */
+  initialize(parent) {
+    this.parent = parent;
     this.fontSizeForm = createFontSizeForm();
+    this.textTypeForm = createTextTypeForm();
     this.formMenu = document.createElement('form');
     this.boldButton = document.createElement('button');
     this.selectLabel = document.createElement('label');
@@ -118,9 +141,11 @@ export default class HTMLTextEditMenu extends HTMLElement {
     this.italicButton = createMenuButton('Italic');
 
     this.boldButton.innerHTML = "Bold";
-    this.boldButton.onclick = this.setSelectionBold
+    this.boldButton.onclick = this.onBoldButtonClicked
 
-    this.italicButton.onclick = () => command('italic');
+    this.textTypeForm.onchange = this.updateTextType.bind(this);
+
+    this.italicButton.onclick = () => executeCommand('italic');
 
     this.style.display = "flex";
     this.style.gap = "8px";
@@ -138,6 +163,7 @@ export default class HTMLTextEditMenu extends HTMLElement {
     this.appendChild(this.fontSizeForm);
     this.formMenu.appendChild(this.selectLabel);
     this.formMenu.appendChild(this.selectMenu);
+    this.appendChild(this.textTypeForm);
   }
 
   update() {

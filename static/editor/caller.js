@@ -1,4 +1,4 @@
-import HTMLTextEditElement from "./HTMLTextEditorElement.js";
+import HTMLTextEditElement from "./HTMLTextEditElement.js";
 
 export function registerCallback() {
   const elements = document.querySelectorAll("#hello");

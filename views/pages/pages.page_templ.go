@@ -29,7 +29,7 @@ func body() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body><h1 id=\"hello\" style=\"min-height: 24px;\">Welcome to my page builder</h1></body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body><p id=\"hello\" style=\"min-height: 24px;\">Welcome to my page builder</p></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
