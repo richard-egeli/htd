@@ -1,157 +1,100 @@
 package router
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 )
 
-type HtdRouter struct {
-	mux              *http.ServeMux
-	globalMiddleware []Middleware
-	routes           map[string]*HtdRoute
-	parent           *HtdRouter
-	subRouters       []*HtdRouter
-	subPath          string
-	fileDir          string
+type Router struct {
+	root        string
+	parent      *Router
+	mux         *http.ServeMux
+	middlewares []Middleware
 }
 
-func Create() *HtdRouter {
-	router := new(HtdRouter)
-	router.routes = make(map[string]*HtdRoute)
-	router.mux = http.NewServeMux()
-	return router
-}
-
-func (h *HtdRouter) Dir(dir string) {
-	h.fileDir = dir
-}
-
-func (h *HtdRouter) Use(m Middleware) {
-	h.globalMiddleware = append(h.globalMiddleware, m)
-}
-
-func (h *HtdRouter) Sub(path string) *HtdRouter {
-	sub := Create()
-	sub.parent = h
-	sub.subPath = path
-	h.subRouters = append(h.subRouters, sub)
-	return sub
-}
-
-func (h *HtdRouter) getAbsolutePath(path string) string {
-	subPath := h.subPath
-	parent := h.parent
-
-	for parent != nil {
-		subPath = parent.subPath + subPath
-		parent = parent.parent
+func New() *Router {
+	return &Router{
+		root:        "",
+		mux:         http.NewServeMux(),
+		middlewares: nil,
 	}
-
-	subPath = subPath + path
-	if len(subPath) > 1 {
-		subPath = "/" + strings.Trim(subPath, "/")
-	}
-
-	return subPath
 }
 
-func (h *HtdRouter) setMethod(method HtdMethod, path string, mw []Middleware, handler http.Handler) error {
-	path = h.getAbsolutePath(path)
-	if route, ok := h.routes[path]; ok {
-		methodFunc := route.GetMethodHandler(method)
-
-		if methodFunc != nil {
-			return errors.New(string(method) + " already contains a route on path " + path)
-		}
-
-		route.SetMethodHandler(method, handler)
+func (router *Router) getMiddlewares() []Middleware {
+	if router.parent != nil {
+		return append(router.parent.getMiddlewares(), router.middlewares...)
 	} else {
-		newRoute := HtdRoute{Path: path}
-		newRoute.SetMethodHandler(method, handler)
-		h.routes[path] = &newRoute
-	}
-
-	handle := h.routes[path].GetMethodHandler(method)
-	for i := len(mw) - 1; i >= 0; i-- {
-		m := mw[i]
-		*handle = m(*handle)
-	}
-
-	return nil
-}
-
-func (h *HtdRouter) Post(path string, middlewares []Middleware, handler http.Handler) error {
-	return h.setMethod(POST, path, middlewares, handler)
-}
-
-func (h *HtdRouter) Get(path string, middlewares []Middleware, handler http.Handler) error {
-	return h.setMethod(GET, path, middlewares, handler)
-}
-
-func (router *HtdRouter) applyDefaultRoutesRecursive(defaultRoute *HtdRoute) {
-	for i := range router.routes {
-		route := router.routes[i]
-		router.mux.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
-			err := route.Handler(w, r)
-			if err == nil {
-				return
-			}
-
-			if defaultRoute != nil {
-				method := defaultRoute.GetMethodHandler(HtdMethod(r.Method))
-				if method != nil {
-					(*method).ServeHTTP(w, r)
-				}
-			}
-		})
-	}
-
-	for i := range router.subRouters {
-		route := router.subRouters[i]
-		route.applyDefaultRoutesRecursive(defaultRoute)
+		return router.middlewares
 	}
 }
 
-func (router *HtdRouter) applyMiddlewareRecursive(parentMiddleware *[]Middleware) {
-	if parentMiddleware == nil {
-		return
+func (router *Router) set(path string, method Method, middlewares []Middleware, handler http.Handler) {
+	path = router.root + path
+	length := len(path)
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
 	}
 
-	for i := range router.routes {
-		route := router.routes[i]
-
-		for _, j := range route.GetMethodIterator() {
-			if handle := route.GetMethodHandler(j); handle != nil {
-				for _, mw := range *parentMiddleware {
-					*handle = mw(*handle)
-				}
-			}
-		}
+	if len(method) > 0 {
+		path = string(method) + " " + path
 	}
 
-	for i := range router.subRouters {
-		subRouter := router.subRouters[i]
-		subRouter.applyMiddlewareRecursive(&subRouter.globalMiddleware)
+	for _, mw := range append(router.getMiddlewares(), middlewares...) {
+		handler = mw(handler)
+	}
 
-		if parentMiddleware != nil {
-			subRouter.applyMiddlewareRecursive(parentMiddleware)
-		}
+	if strings.HasSuffix(path, "/") && length > 1 {
+		absPath := strings.TrimSuffix(path, "/")
+		router.mux.Handle(absPath, handler)
+	}
+
+	router.mux.Handle(path, handler)
+}
+
+func (router *Router) route() string {
+	if router.parent != nil {
+		return router.parent.route() + router.root
+	}
+
+	return router.root
+}
+
+func (router *Router) Use(middleware Middleware) {
+	router.middlewares = append(router.middlewares, middleware)
+}
+
+func (router *Router) Sub(subroute string) *Router {
+	return &Router{
+		root:        router.route() + subroute,
+		mux:         router.mux,
+		parent:      router,
+		middlewares: nil,
 	}
 }
 
-func (router *HtdRouter) Listen(port string) error {
-	router.applyMiddlewareRecursive(&router.globalMiddleware)
-	router.applyDefaultRoutesRecursive(router.routes["*"])
+func (router *Router) Get(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, GET, middlewares, handler)
+}
 
-	if router.fileDir != "" {
-		trimmed := strings.Trim(router.fileDir, "/")
-		slashed := "/" + trimmed + "/"
+func (router *Router) Post(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, POST, middlewares, handler)
+}
 
-		fs := http.FileServer(http.Dir(trimmed))
+func (router *Router) Any(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, "", middlewares, handler)
+}
 
-		router.mux.Handle(slashed, GzipMiddleware(http.StripPrefix(slashed, fs)))
+func (router *Router) Dir(path string, dir string, middlewares []Middleware) {
+	fs := http.FileServer(http.Dir(dir))
+
+	for _, mw := range middlewares {
+		fs = mw(fs)
 	}
+
+	router.mux.Handle("GET "+path, http.StripPrefix(path, fs))
+}
+
+func (router *Router) Listen(port string) error {
 
 	return http.ListenAndServe(":"+port, router.mux)
 }

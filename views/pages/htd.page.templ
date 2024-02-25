@@ -37,7 +37,7 @@ templ htdContent(name string) {
   <div>
     <h1 class="text-xl font-semibold p-5">Menu</h1>
     <ul class="space-y-2">
-      @htdButton("Home", getAttribs("/"+name+"/home"))
+      @htdButton("Home", getAttribs("/"+name))
       @htdButton("About", getAttribs("/"+name+"/about"))
       @htdButton("Pages", getAttribs("/"+name+"/pages"))
       @htdButton("Contact", getAttribs("/"+name+"/contact"))

@@ -45,7 +45,7 @@ func (router *Router) RefreshMiddleware(next http.Handler) http.Handler {
 
 		// Add a script tag after handling the next event, in order to insert a <script> tag at the
 		// Very end of the HTML page
-		if HtdMethod(r.Method) == GET {
+		if Method(r.Method) == GET {
 			err := views.ReloadScript().Render(context.Background(), w)
 			if err != nil {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

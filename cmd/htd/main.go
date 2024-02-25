@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gorilla/csrf"
 	_ "github.com/mattn/go-sqlite3"
@@ -82,7 +81,7 @@ func DashboardRouteMiddleware(next http.Handler) http.Handler {
 
 func DefaultRouteMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/") && len(r.URL.Path) > 1 {
+		if r.URL.Path != "/" {
 			w.Header().Add("Content-Type", "text/html; charset=utf8")
 			pages.NotFoundPage(w, r, nil).Render(context.Background(), w)
 			log.Println("Not Found Page")
@@ -104,7 +103,7 @@ func main() {
 	}
 
 	htdData := pages.HtdData{
-		Name:              "htd",
+		Name:              "dashboard",
 		GenerateCSRFToken: csrf.Token,
 	}
 
@@ -120,9 +119,11 @@ func main() {
 	base.Dir("/static/", "./static", nil)
 
 	base.Post("/login", nil, router.Route(loginPost))
+	base.Post("/logout", nil, router.Redirect("/login"))
 
 	dash.Get("/", []router.Middleware{DashboardRouteMiddleware}, router.Page(pages.HtdPage, &htdData))
-	base.Get("/", []router.Middleware{DefaultRouteMiddleware}, router.Page(pages.LoginPage, &loginData))
+	base.Get("/", []router.Middleware{DefaultRouteMiddleware}, router.Redirect("/login"))
+	base.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
 
 	base.Listen("8080")
 }

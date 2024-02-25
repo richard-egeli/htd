@@ -2,6 +2,8 @@ tmp/
 build/
 .git/
 
+views/**/*_templ.go
+
 tailwindcss
 .env
 
