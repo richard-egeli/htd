@@ -17,7 +17,12 @@ func (router *Router) RefreshMiddleware(next http.Handler) http.Handler {
 		eventHandler := func() http.HandlerFunc {
 			shouldReload := false
 
-			return func(w http.ResponseWriter, _ *http.Request) {
+			return func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("HX-Request") == "true" {
+					next.ServeHTTP(w, r)
+					return
+				}
+
 				w.Header().Set("Content-Type", "text/event-stream")
 				w.Header().Set("Cache-Control", "no-cache")
 				w.Header().Set("Connection", "keep-alive")
@@ -42,6 +47,10 @@ func (router *Router) RefreshMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)
+
+		if r.Header.Get("HX-Request") == "true" {
+			return
+		}
 
 		// Add a script tag after handling the next event, in order to insert a <script> tag at the
 		// Very end of the HTML page

@@ -1,0 +1,57 @@
+package pages
+
+import "github.com/richard-egeli/htd/views/layout"
+import "net/http"
+import "github.com/richard-egeli/htd/views/icons"
+
+type DashboardData struct {
+	SidebarData *layout.SidebarData
+}
+
+type StatisticsCardData struct {
+	Count string
+	Text  string
+}
+
+templ StatisticsCardComponent(data *StatisticsCardData) {
+	<div class="bg-white flex justify-between py-4 px-3 shadow-md border border-gray-300 rounded-md text-indigo-700">
+		<div>
+			<div class="text-xl">
+				{ data.Count }
+			</div>
+			<div class="text-sm text-gray-400">
+				{ data.Text }
+			</div>
+		</div>
+		@icons.CheckCircleIcon()
+	</div>
+}
+
+templ DashboardPage(w http.ResponseWriter, r *http.Request, data *DashboardData) {
+	@layout.SidebarLayout(w, r, data.SidebarData) {
+		<div class="grid grid-cols-3 gap-4">
+			@StatisticsCardComponent(&StatisticsCardData{Count: "5096", Text: "Visitors"})
+			@StatisticsCardComponent(&StatisticsCardData{Count: "$1024", Text: "Earnings"})
+			@StatisticsCardComponent(&StatisticsCardData{Count: "156", Text: "Customers"})
+			<div class="flex flex-col justify-center items-center py-4 px-3 bg-white shadow-md rounded-md col-span-2 max-h-96 w-full border border-gray-300">
+				<div class="flex w-full px-8 py-3 justify-between">
+					<div class="text-indigo-600 flex gap-1">
+						<button class="focus:text-white focus:bg-indigo-600 py-2 px-3 rounded-lg">Year</button>
+						<button class="focus:text-white focus:bg-indigo-600 py-2 px-3 rounded-lg">Month</button>
+						<button class="focus:text-white focus:bg-indigo-600 py-2 px-3 rounded-lg">Week</button>
+						<button class="focus:text-white focus:bg-indigo-600 py-2 px-3 rounded-lg">Day</button>
+					</div>
+					<form>
+						<select class="text-gray-500 text-sm">
+							<option>PRODUCT SALES</option>
+						</select>
+					</form>
+				</div>
+				<canvas class="w-full max-h-80 pb-2" id="chartjs-line"></canvas>
+			</div>
+			<div class="flex justify-center items-center py-4 px-3 bg-white shadow-md rounded-md max-h-96 w-full border border-gray-300">
+				<canvas id="chartjs-pie"></canvas>
+			</div>
+		</div>
+	}
+}

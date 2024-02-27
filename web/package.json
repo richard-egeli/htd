@@ -10,5 +10,8 @@
   "devDependencies": {
     "typescript": "^5.2.2",
     "vite": "^5.1.4"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.1"
   }
 }

@@ -1,0 +1,9 @@
+package components
+
+type Data struct {
+	Icon       func() templ.Component
+	Attributes templ.Attributes
+	OnClick    func()
+	Styling    templ.CSSClass
+	Class      string
+}

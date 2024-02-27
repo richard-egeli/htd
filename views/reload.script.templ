@@ -7,6 +7,6 @@ templ ReloadScript() {
     evtSource.onmessage = function (_) {
       window.location.reload();
     };
-  } catch (_) { }
+  } catch (_) { window.location.reload();}
 </script>
 }

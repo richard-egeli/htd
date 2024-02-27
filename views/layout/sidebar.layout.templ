@@ -1,0 +1,129 @@
+package layout
+
+import "github.com/richard-egeli/htd/views/icons"
+import "net/http"
+import "github.com/richard-egeli/htd/views/components"
+
+type SidebarData struct {
+	Name              string
+	GenerateCSRFToken func(r *http.Request) string
+}
+
+var dashboardButton = components.Data{
+	Icon: icons.ChartPieIcon,
+	Attributes: templ.Attributes{
+		"hx-get":      "/dashboard",
+		"hx-swap":     "innerHTML",
+		"hx-target":   "#main-content-area",
+		"hx-push-url": "/dashboard",
+	},
+}
+
+var ordersButton = components.Data{
+	Icon: icons.ShoppingBagIcon,
+	Attributes: templ.Attributes{
+		"hx-get":      "/dashboard/orders",
+		"hx-swap":     "innerHTML",
+		"hx-target":   "#main-content-area",
+		"hx-push-url": "/dashboard/orders",
+	},
+}
+
+var productsButton = components.Data{
+	Icon: icons.ClipboardDocumentIcon,
+	Attributes: templ.Attributes{
+		"hx-get":      "/dashboard/products",
+		"hx-swap":     "innerHTML",
+		"hx-target":   "#main-content-area",
+		"hx-push-url": "/dashboard/products",
+	},
+}
+
+var settingsButton = components.Data{
+	Icon: icons.CogIcon,
+	Attributes: templ.Attributes{
+		"hx-get":      "/dashboard/settings",
+		"hx-swap":     "innerHTML",
+		"hx-target":   "#main-content-area",
+		"hx-push-url": "/dashboard/settings",
+	},
+}
+
+var logoutButton = components.Data{
+	Icon: icons.PowerIcon,
+	Attributes: templ.Attributes{
+		"hx-post":     "/logout",
+		"hx-swap":     "outerHTML",
+		"hx-target":   "body",
+		"hx-push-url": "true",
+	},
+}
+
+css styles() {
+	color: #0000FF;
+}
+
+templ iconButton(data *components.Data) {
+	<button
+		class={
+			data.Class,
+			"sidebar-button flex w-full justify-start gap-6 text-gray-500 focus:text-blue-500 hover:text-blue-500 px-4 py-2",
+			"border-b-2 border-transparent focus:border-b-2 focus:border-blue-500 outline-none",
+		}
+		{ data.Attributes... }
+	>
+		@data.Icon()
+		<span>
+			{ children... }
+		</span>
+	</button>
+}
+
+templ SidebarLayout(w http.ResponseWriter, r *http.Request, data *SidebarData) {
+	if r.Header.Get("HX-Request") != "true" {
+		@BaseLayout(data.GenerateCSRFToken(r), "Dashboard Page") {
+			<div class="flex flex-col h-screen">
+				<header class="h-14 flex-shrink-0">
+					<div class="w-full h-full bg-indigo-600">
+						<div class="bg-indigo-700 w-64 h-full flex justify-center items-center text-white font-bold">Content Management System</div>
+					</div>
+				</header>
+				<main class="flex flex-1">
+					<div class="w-64 text-gray flex flex-col justify-between bg-white border-r border-gray">
+						<div class="flex flex-col justify-start items-center">
+							<div class="px-10 pt-10">
+								<img src="/static/bird.png" class="rounded-full"/>
+							</div>
+							<h1 class="text-xl font-semibold p-5 text-indigo-600">Passerina Cyanea</h1>
+							<ul class="w-max flex flex-col gap-1">
+								@iconButton(&dashboardButton) {
+									Dashboard
+								}
+								@iconButton(&ordersButton) {
+									Orders
+								}
+								@iconButton(&productsButton) {
+									Products
+								}
+								@iconButton(&settingsButton) {
+									Settings
+								}
+								@iconButton(&logoutButton) {
+									Logout
+								}
+							</ul>
+						</div>
+						<div class="">
+							@icons.RingsIcon()
+						</div>
+					</div>
+					<div class="flex-1 p-10 bg-gray-100" id="main-content-area">
+						{ children... }
+					</div>
+				</main>
+			</div>
+		}
+	} else {
+		{ children... }
+	}
+}

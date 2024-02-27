@@ -1,0 +1,14 @@
+package pages
+
+import "net/http"
+import "github.com/richard-egeli/htd/views/layout"
+
+type OrdersData struct {
+	SidebarData *layout.SidebarData
+}
+
+templ OrdersPage(w http.ResponseWriter, r *http.Request, data*OrdersData) {
+	@layout.SidebarLayout(w, r, data.SidebarData) {
+		<h1>Orders Page</h1>
+	}
+}

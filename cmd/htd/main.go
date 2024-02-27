@@ -12,6 +12,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/richard-egeli/htd/pkg/router"
+	"github.com/richard-egeli/htd/views/layout"
 	"github.com/richard-egeli/htd/views/pages"
 )
 
@@ -102,9 +103,24 @@ func main() {
 		Title:             "Login",
 	}
 
-	htdData := pages.HtdData{
-		Name:              "dashboard",
+	sidebarData := layout.SidebarData{
 		GenerateCSRFToken: csrf.Token,
+	}
+
+	dashboardData := pages.DashboardData{
+		SidebarData: &sidebarData,
+	}
+
+	settingsData := pages.SettingsData{
+		SidebarData: &sidebarData,
+	}
+
+	ordersData := pages.OrdersData{
+		SidebarData: &sidebarData,
+	}
+
+	productsData := pages.ProductsData{
+		SidebarData: &sidebarData,
 	}
 
 	base := router.New()
@@ -121,9 +137,13 @@ func main() {
 	base.Post("/login", nil, router.Route(loginPost))
 	base.Post("/logout", nil, router.Redirect("/login"))
 
-	dash.Get("/", []router.Middleware{DashboardRouteMiddleware}, router.Page(pages.HtdPage, &htdData))
 	base.Get("/", []router.Middleware{DefaultRouteMiddleware}, router.Redirect("/login"))
 	base.Get("/login", nil, router.Page(pages.LoginPage, &loginData))
+
+	dash.Get("/", []router.Middleware{DashboardRouteMiddleware}, router.Page(pages.DashboardPage, &dashboardData))
+	dash.Get("/settings", nil, router.Page(pages.SettingsPage, &settingsData))
+	dash.Get("/products", nil, router.Page(pages.ProductsPage, &productsData))
+	dash.Get("/orders", nil, router.Page(pages.OrdersPage, &ordersData))
 
 	base.Listen("8080")
 }
