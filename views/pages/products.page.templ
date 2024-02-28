@@ -2,13 +2,57 @@ package pages
 
 import "net/http"
 import "github.com/richard-egeli/htd/views/layout"
+import "github.com/richard-egeli/htd/views/icons"
 
 type ProductsData struct {
 	SidebarData *layout.SidebarData
 }
 
+templ Product() {
+	<tr class="border-t border-gray-300 text-gray-600">
+		<td>Genser | Duo Dino</td>
+		<td>Made By Samy</td>
+		<td>
+			<img src="/static/small.webp" class="h-36 py-4"/>
+		</td>
+		<td>300kr</td>
+		<td>000213504</td>
+		<td>Available</td>
+		<td>
+			<button class="p-4">
+				@icons.PencilSquareIcon()
+			</button>
+		</td>
+	</tr>
+}
+
 templ ProductsPage(w http.ResponseWriter, r* http.Request, data *ProductsData) {
 	@layout.SidebarLayout(w, r, data.SidebarData) {
-		<h1>Products Page</h1>
+		<div class="w-full h-full p-8 shadow-md bg-white border-gray-300 border rounded-md">
+			<table class="w-full text-left">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Brand</th>
+						<th>Preview</th>
+						<th>Price</th>
+						<th>SKU</th>
+						<th>Availability</th>
+						<th>Edit</th>
+					</tr>
+				</thead>
+				<tbody>
+					@Product()
+					@Product()
+					@Product()
+					@Product()
+					@Product()
+					@Product()
+					@Product()
+					@Product()
+					@Product()
+				</tbody>
+			</table>
+		</div>
 	}
 }

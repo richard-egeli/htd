@@ -1,28 +1,20 @@
 package router
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/richard-egeli/htd/views"
 )
 
 var initialized = false
 
 // Handles sending a <script> tag that enables automatic browser refresh over SSE (Server Sent Events)
-func (router *Router) RefreshMiddleware(next http.Handler) http.Handler {
+func (router *Router) SetupBrowserRefreshEvent() {
 	if !initialized {
 		eventHandler := func() http.HandlerFunc {
 			shouldReload := false
 
 			return func(w http.ResponseWriter, r *http.Request) {
-				if r.Header.Get("HX-Request") == "true" {
-					next.ServeHTTP(w, r)
-					return
-				}
-
 				w.Header().Set("Content-Type", "text/event-stream")
 				w.Header().Set("Cache-Control", "no-cache")
 				w.Header().Set("Connection", "keep-alive")
@@ -44,22 +36,4 @@ func (router *Router) RefreshMiddleware(next http.Handler) http.Handler {
 		router.mux.HandleFunc("GET /server/sent/event/browser/reload", eventHandler())
 		initialized = true
 	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-
-		if r.Header.Get("HX-Request") == "true" {
-			return
-		}
-
-		// Add a script tag after handling the next event, in order to insert a <script> tag at the
-		// Very end of the HTML page
-		if Method(r.Method) == GET {
-			err := views.ReloadScript().Render(context.Background(), w)
-			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-		}
-	})
 }

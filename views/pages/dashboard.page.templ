@@ -27,6 +27,54 @@ templ StatisticsCardComponent(data *StatisticsCardData) {
 	</div>
 }
 
+type ProductStatus int
+
+const (
+	PENDING ProductStatus = iota
+	FAILED
+	PAID
+)
+
+templ FakeProduct(status ProductStatus) {
+	<tr class="w-full border-b border-gray-500 border-opacity-20 text-gray-600">
+		<td class="h-12"><input type="checkbox"/></td>
+		<td class="py-2 gap-4 flex justify-center">
+			<button class="flex justify-center items-center gap-4 px-4 border-r-2 border-transparent hover:border-gray-300">
+				<img class="max-h-24 rounded-md" src="static/small.webp"/>
+				<span>
+					Genser | Duo Dino
+				</span>
+			</button>
+		</td>
+		<td>John Lin</td>
+		<td>Norway</td>
+		<td>3</td>
+		<td>
+			switch status {
+				case PENDING: 
+					<span class="px-4 py-2 bg-blue-500 text-white rounded-md">
+						Pending
+					</span>
+				case FAILED:
+					<span class="px-4 py-2 bg-red-500 text-white rounded-md">
+						Failed	
+					</span>
+				case PAID:
+					<span class="px-4 py-2 bg-green-500 text-white rounded-md">
+						Paid
+					</span>
+			}
+		</td>
+		<td>
+			<div class="flex justify-center items-center">
+				<button class="p-3 hover:text-red-500">
+					@icons.TrashIcon()
+				</button>
+			</div>
+		</td>
+	</tr>
+}
+
 templ DashboardPage(w http.ResponseWriter, r *http.Request, data *DashboardData) {
 	@layout.SidebarLayout(w, r, data.SidebarData) {
 		<div class="grid grid-cols-3 gap-4">
@@ -41,7 +89,7 @@ templ DashboardPage(w http.ResponseWriter, r *http.Request, data *DashboardData)
 						<button class="focus:text-white focus:bg-indigo-600 py-2 px-3 rounded-lg">Week</button>
 						<button class="focus:text-white focus:bg-indigo-600 py-2 px-3 rounded-lg">Day</button>
 					</div>
-					<form>
+					<form class="flex justify-center items-center">
 						<select class="text-gray-500 text-sm">
 							<option>PRODUCT SALES</option>
 						</select>
@@ -50,7 +98,28 @@ templ DashboardPage(w http.ResponseWriter, r *http.Request, data *DashboardData)
 				<canvas class="w-full max-h-80 pb-2" id="chartjs-line"></canvas>
 			</div>
 			<div class="flex justify-center items-center py-4 px-3 bg-white shadow-md rounded-md max-h-96 w-full border border-gray-300">
-				<canvas id="chartjs-pie"></canvas>
+				<canvas class="max-h-80 p-2" id="chartjs-pie"></canvas>
+			</div>
+			<div class="border-gray-300 col-span-3 bg-white shadow-md rounded-md w-full py-4 px-3">
+				<table class="w-full text-center box-border p-4">
+					<thead class="w-full">
+						<tr class="font-normal text-gray-500 border-b border-gray-300">
+							<th><input type="checkbox"/></th>
+							<th class="h-12">Product</th>
+							<th>Customer</th>
+							<th>Location</th>
+							<th>Quantity</th>
+							<th>Status</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody class="">
+						@FakeProduct(PAID)
+						@FakeProduct(PENDING)
+						@FakeProduct(FAILED)
+						@FakeProduct(PAID)
+					</tbody>
+				</table>
 			</div>
 		</div>
 	}

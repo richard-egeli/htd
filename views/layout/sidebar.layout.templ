@@ -83,16 +83,38 @@ templ SidebarLayout(w http.ResponseWriter, r *http.Request, data *SidebarData) {
 	if r.Header.Get("HX-Request") != "true" {
 		@BaseLayout(data.GenerateCSRFToken(r), "Dashboard Page") {
 			<div class="flex flex-col h-screen">
-				<header class="h-14 flex-shrink-0">
-					<div class="w-full h-full bg-indigo-600">
-						<div class="bg-indigo-700 w-64 h-full flex justify-center items-center text-white font-bold">Content Management System</div>
+				<header class="h-16 w-full flex flex-shrink-0 bg-indigo-600 text-gray-300 fixed">
+					<div class="bg-indigo-700 w-64 h-full flex justify-center items-center text-white font-semibold">Content Management System</div>
+					<div class="flex flex-1 h-full justify-between px-4">
+						<div class="flex justify-center items-center py-4 gap-2">
+							<button class="h-full p-2 flex justify-center items-center">
+								@icons.ArrowLeftCircleIcon()
+							</button>
+							<div class="flex justify-center items-center gap-2 border-b border-gray-400 py-2 px-2">
+								@icons.MagnifyingGlass()
+								<input class="bg-transparent text-white outline-none text-sm" placeholder="Find projects or clients"/>
+							</div>
+						</div>
+						<div class="flex justify-center items-center gap-2">
+							<button class="p-2 flex justify-center items-center">
+								@icons.BellIcon()
+							</button>
+							<div class="w-[1px] h-5/6 bg-gray-300 bg-opacity-20"></div>
+							<button class="p-2 flex justify-center items-center">
+								@icons.EnvelopeIcon()
+							</button>
+							<div class="w-[1px] h-5/6 bg-gray-300 bg-opacity-20"></div>
+							<button class="p-2 flex justify-center items-center">
+								@icons.QuestionMarkCircleIcon()
+							</button>
+						</div>
 					</div>
 				</header>
-				<main class="flex flex-1">
-					<div class="w-64 text-gray flex flex-col justify-between bg-white border-r border-gray">
+				<main class="flex flex-1 mt-16">
+					<div class="w-64 text-gray flex flex-col justify-between bg-white border-r border-gray fixed" style="height: calc(100vh - 4rem);">
 						<div class="flex flex-col justify-start items-center">
 							<div class="px-10 pt-10">
-								<img src="/static/bird.png" class="rounded-full"/>
+								<img src="/static/bird.webp" alt="Profile picture for user" class="rounded-full"/>
 							</div>
 							<h1 class="text-xl font-semibold p-5 text-indigo-600">Passerina Cyanea</h1>
 							<ul class="w-max flex flex-col gap-1">
@@ -117,7 +139,7 @@ templ SidebarLayout(w http.ResponseWriter, r *http.Request, data *SidebarData) {
 							@icons.RingsIcon()
 						</div>
 					</div>
-					<div class="flex-1 p-10 bg-gray-100" id="main-content-area">
+					<div class="overflow-auto flex-1 p-10 bg-gray-100 ml-64" id="main-content-area">
 						{ children... }
 					</div>
 				</main>

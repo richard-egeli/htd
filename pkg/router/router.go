@@ -80,6 +80,26 @@ func (router *Router) Post(path string, middlewares []Middleware, handler http.H
 	router.set(path, POST, middlewares, handler)
 }
 
+func (router *Router) Delete(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, DELETE, middlewares, handler)
+}
+
+func (router *Router) Put(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, PUT, middlewares, handler)
+}
+
+func (router *Router) Patch(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, PATCH, middlewares, handler)
+}
+
+func (router *Router) Head(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, HEAD, middlewares, handler)
+}
+
+func (router *Router) Options(path string, middlewares []Middleware, handler http.Handler) {
+	router.set(path, OPTIONS, middlewares, handler)
+}
+
 func (router *Router) Any(path string, middlewares []Middleware, handler http.Handler) {
 	router.set(path, "", middlewares, handler)
 }

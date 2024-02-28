@@ -1,7 +1,9 @@
 package router
 
 import (
+	"compress/gzip"
 	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 	"path/filepath"
@@ -14,17 +16,29 @@ func TypescriptTranspilationMiddleware(next http.Handler) http.Handler {
 
 		if extension == ".js" {
 			filename := strings.ReplaceAll(r.URL.Path, ".js", ".ts")
-			cmd := exec.Command("esbuild", "web/src/"+filename, "--bundle")
+			cmd := exec.Command("esbuild", "web/src/"+filename, "--bundle", "--minify", "--format=esm", "--target=esnext")
 			output, err := cmd.Output()
 			if err != nil {
 				http.Error(w, "File not found", http.StatusNotFound)
 				return
 			}
 
-			w.Header().Add("Content-Type", "application/javascript")
-			w.WriteHeader(http.StatusOK)
+			if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+				w.Header().Add("Content-Encoding", "gzip")
+				w.Header().Add("Content-Type", "application/javascript")
+
+				writer := gzip.NewWriter(w)
+				defer writer.Close()
+
+				_, err = writer.Write(output)
+				if err != nil {
+					log.Println("ERROR! ", err)
+				}
+				return
+			}
+
 			fmt.Fprint(w, string(output))
-			return
+			w.WriteHeader(http.StatusOK)
 		}
 
 		next.ServeHTTP(w, r)

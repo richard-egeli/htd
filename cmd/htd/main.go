@@ -12,6 +12,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/richard-egeli/htd/pkg/router"
+	"github.com/richard-egeli/htd/pkg/store"
 	"github.com/richard-egeli/htd/views/layout"
 	"github.com/richard-egeli/htd/views/pages"
 )
@@ -98,6 +99,12 @@ func main() {
 		log.Fatal("Failed to load .env file")
 	}
 
+	if err := store.Open(); err != nil {
+		log.Fatal("Failed to open sqlite database")
+	}
+
+	defer store.Close()
+
 	loginData := pages.LoginData{
 		GenerateCSRFToken: csrf.Token,
 		Title:             "Login",
@@ -125,11 +132,12 @@ func main() {
 
 	base := router.New()
 	dash := base.Sub("dashboard")
+	api := base.Sub("api")
 
-	base.Use(base.RefreshMiddleware)
-	base.Use(router.CSRFMiddleware)
+	// base.Use(router.CSRFMiddleware)
 	base.Use(router.CorsMiddleware)
 	base.Use(router.GzipMiddleware)
+	base.SetupBrowserRefreshEvent()
 
 	base.Dir("/scripts/", "./web/src", []router.Middleware{router.TypescriptTranspilationMiddleware})
 	base.Dir("/static/", "./static", nil)
@@ -144,6 +152,11 @@ func main() {
 	dash.Get("/settings", nil, router.Page(pages.SettingsPage, &settingsData))
 	dash.Get("/products", nil, router.Page(pages.ProductsPage, &productsData))
 	dash.Get("/orders", nil, router.Page(pages.OrdersPage, &ordersData))
+
+	api.Post("/products/create", nil, router.Route(store.CreateProduct))
+	api.Get("/products/fetch", nil, router.Route(store.FetchProductsAll))
+	api.Post("/images", nil, router.Route(store.CreateImage))
+	api.Delete("/images/{id}", nil, router.Route(store.DeleteImage))
 
 	base.Listen("8080")
 }

@@ -17,14 +17,6 @@ templ BaseLayout(token, title string) {
 		</head>
 		<body>
 			{ children... }
-			<script>
-    try {
-      document.body.addEventListener('htmx:configRequest', (event) => {
-        const token = document.querySelector('meta[name="csrf"]').getAttribute('content');
-        event.detail.headers['X-CSRF-Token'] = token;
-      })
-    } catch (_) { }
-  </script>
 		</body>
 	</html>
 }
