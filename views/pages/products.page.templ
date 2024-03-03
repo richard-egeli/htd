@@ -3,32 +3,47 @@ package pages
 import "net/http"
 import "github.com/richard-egeli/htd/views/layout"
 import "github.com/richard-egeli/htd/views/icons"
+import "github.com/richard-egeli/htd/pkg/store"
+import "fmt"
 
 type ProductsData struct {
 	SidebarData *layout.SidebarData
 }
 
-templ Product() {
+templ Product(product *store.Product) {
 	<tr class="border-t border-gray-300 text-gray-600">
-		<td>Genser | Duo Dino</td>
-		<td>Made By Samy</td>
+		<td>{ product.Name }</td>
+		<td>{ product.Brand }</td>
 		<td>
-			<img src="/static/small.webp" class="h-36 py-4"/>
+			<img src="/static/small.webp" alt="Product Preview" class="h-36 py-4"/>
 		</td>
-		<td>300kr</td>
-		<td>000213504</td>
+		<td>{ fmt.Sprintf("%.02f", product.Price) }kr</td>
+		<td>{ product.SKU }</td>
 		<td>Available</td>
 		<td>
-			<button class="p-4">
+			<button aria-label="Product Edit Button" class="p-4 hover:text-indigo-600">
 				@icons.PencilSquareIcon()
 			</button>
 		</td>
 	</tr>
 }
 
+func FetchProducts() []store.Product {
+	var handler store.Product
+	var products []store.Product
+
+	p, _ := handler.FetchAll()
+
+	return append(products, p...)
+}
+
 templ ProductsPage(w http.ResponseWriter, r* http.Request, data *ProductsData) {
 	@layout.SidebarLayout(w, r, data.SidebarData) {
 		<div class="w-full h-full p-8 shadow-md bg-white border-gray-300 border rounded-md">
+			<button class="px-4 py-2 mb-6 bg-indigo-600 text-white rounded-md hover:bg-blue-500" hx-get="/dashboard/products/create" hx-target="#product-creation-page">
+				New Product
+			</button>
+			<div class="relative" id="product-creation-page"></div>
 			<table class="w-full text-left">
 				<thead>
 					<tr>
@@ -42,15 +57,9 @@ templ ProductsPage(w http.ResponseWriter, r* http.Request, data *ProductsData) {
 					</tr>
 				</thead>
 				<tbody>
-					@Product()
-					@Product()
-					@Product()
-					@Product()
-					@Product()
-					@Product()
-					@Product()
-					@Product()
-					@Product()
+					for _, product := range FetchProducts() {
+						@Product(&product)
+					}
 				</tbody>
 			</table>
 		</div>

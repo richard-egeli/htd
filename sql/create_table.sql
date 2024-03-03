@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS products(
   brand TEXT NOT NULL,
   category TEXT NOT NULL,
   sku TEXT NOT NULL,
-  price INTEGER NOT NULL
+  price REAL NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS images(

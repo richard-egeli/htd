@@ -64,19 +64,21 @@ css styles() {
 }
 
 templ iconButton(data *components.Data) {
-	<button
-		class={
-			data.Class,
-			"sidebar-button flex w-full justify-start gap-6 text-gray-500 focus:text-blue-500 hover:text-blue-500 px-4 py-2",
-			"border-b-2 border-transparent focus:border-b-2 focus:border-blue-500 outline-none",
-		}
-		{ data.Attributes... }
-	>
-		@data.Icon()
-		<span>
-			{ children... }
-		</span>
-	</button>
+	<li>
+		<button
+			class={
+				data.Class,
+				"sidebar-button flex w-full justify-start gap-6 text-gray-500 focus:text-blue-500 hover:text-blue-500 px-4 py-2",
+				"border-b-2 border-transparent focus:border-b-2 focus:border-blue-500 outline-none",
+			}
+			{ data.Attributes... }
+		>
+			@data.Icon()
+			<span>
+				{ children... }
+			</span>
+		</button>
+	</li>
 }
 
 templ SidebarLayout(w http.ResponseWriter, r *http.Request, data *SidebarData) {
@@ -87,24 +89,24 @@ templ SidebarLayout(w http.ResponseWriter, r *http.Request, data *SidebarData) {
 					<div class="bg-indigo-700 w-64 h-full flex justify-center items-center text-white font-semibold">Content Management System</div>
 					<div class="flex flex-1 h-full justify-between px-4">
 						<div class="flex justify-center items-center py-4 gap-2">
-							<button class="h-full p-2 flex justify-center items-center">
+							<button aria-label="Search Button With Icon" id="search-button" class="h-full p-2 flex justify-center items-center">
 								@icons.ArrowLeftCircleIcon()
 							</button>
-							<div class="flex justify-center items-center gap-2 border-b border-gray-400 py-2 px-2">
+							<div aria-label="Magnifying Glass Icon" class="flex justify-center items-center gap-2 border-b border-gray-400 py-2 px-2">
 								@icons.MagnifyingGlass()
 								<input class="bg-transparent text-white outline-none text-sm" placeholder="Find projects or clients"/>
 							</div>
 						</div>
 						<div class="flex justify-center items-center gap-2">
-							<button class="p-2 flex justify-center items-center">
+							<button aria-label="Notification Button" class="p-2 flex justify-center items-center">
 								@icons.BellIcon()
 							</button>
 							<div class="w-[1px] h-5/6 bg-gray-300 bg-opacity-20"></div>
-							<button class="p-2 flex justify-center items-center">
+							<button aria-label="Message Button" class="p-2 flex justify-center items-center">
 								@icons.EnvelopeIcon()
 							</button>
 							<div class="w-[1px] h-5/6 bg-gray-300 bg-opacity-20"></div>
-							<button class="p-2 flex justify-center items-center">
+							<button aria-label="Help Button" class="p-2 flex justify-center items-center">
 								@icons.QuestionMarkCircleIcon()
 							</button>
 						</div>

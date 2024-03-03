@@ -1,0 +1,43 @@
+package components
+
+templ productInput() {
+	<div class="flex flex-col">
+		<label class="text-gray-500 text-sm">Product Name</label>
+		<input class="px-4 py-2 border-b border-gray-500" name="name" placeholder="Enter the product name"/>
+	</div>
+}
+
+templ ProductCreateComponent(any ...any) {
+	<div id="create-product-menu" class="fixed top-0 right-0 bottom-0 left-0 z-10 w-full h-full bg-gray-500 bg-opacity-30 flex justify-center items-center">
+		<div class="bg-white bg-opacity-100 px-8 py-4 rounded-md min-w-[640px]">
+			<button id="create-product-menu-button">X</button>
+			<form class="grid grid-cols-2 gap-4" id="create-product-menu-form" hx-post="/api/products" hx-swap="delete" hx-target="#create-product-menu">
+				<div class="flex flex-col">
+					<label class="text-gray-500 text-sm">Name</label>
+					<input class="px-4 py-2 border-b border-gray-500" name="name" placeholder="Enter the product name"/>
+				</div>
+				<div class="flex flex-col">
+					<label class="text-gray-500 text-sm">Category</label>
+					<input class="px-4 py-2 border-b border-gray-500" name="category" placeholder="Enter the product category"/>
+				</div>
+				<div class="flex flex-col">
+					<label class="text-gray-500 text-sm">Brand</label>
+					<input class="px-4 py-2 border-b border-gray-500" name="brand" placeholder="Enter the product brand"/>
+				</div>
+				<div class="flex flex-col">
+					<label class="text-gray-500 text-sm">SKU</label>
+					<input class="px-4 py-2 border-b border-gray-500" name="sku" placeholder="Enter the product sku"/>
+				</div>
+				<div class="flex flex-col">
+					<label class="text-gray-500 text-sm">Price</label>
+					<input type="text" class="px-4 py-2 border-b border-gray-500" name="price" placeholder="Enter the product price"/>
+				</div>
+				<div class="flex flex-col row-span-4 col-span-2">
+					<label class="text-gray-500 text-sm">Description</label>
+					<textarea name="description" maxlength="128" class="resize-none px-4 py-2 border rounded-md border-gray-500 h-64 w-full" name="description" placeholder="Enter the product description"></textarea>
+				</div>
+				<button type="submit" class="px-4 py-2 text-white bg-indigo-600 rounded-md col-span-2">Create</button>
+			</form>
+		</div>
+	</div>
+}

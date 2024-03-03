@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/richard-egeli/htd/pkg/router"
 	"github.com/richard-egeli/htd/pkg/store"
+	"github.com/richard-egeli/htd/views/components"
 	"github.com/richard-egeli/htd/views/layout"
 	"github.com/richard-egeli/htd/views/pages"
 )
@@ -151,10 +152,12 @@ func main() {
 	dash.Get("/", []router.Middleware{DashboardRouteMiddleware}, router.Page(pages.DashboardPage, &dashboardData))
 	dash.Get("/settings", nil, router.Page(pages.SettingsPage, &settingsData))
 	dash.Get("/products", nil, router.Page(pages.ProductsPage, &productsData))
+	dash.Get("/products/create", nil, router.Component(components.ProductCreateComponent))
 	dash.Get("/orders", nil, router.Page(pages.OrdersPage, &ordersData))
 
-	api.Post("/products/create", nil, router.Route(store.CreateProduct))
-	api.Get("/products/fetch", nil, router.Route(store.FetchProductsAll))
+	api.Post("/products", nil, router.Route(store.CreateProduct))
+	api.Get("/products", nil, router.Route(store.FetchProducts))
+	api.Get("/products/{id}", nil, router.Route(store.FetchProduct))
 	api.Post("/images", nil, router.Route(store.CreateImage))
 	api.Delete("/images/{id}", nil, router.Route(store.DeleteImage))
 

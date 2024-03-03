@@ -1,19 +1,22 @@
 package store
 
-import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
-
 type Product struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Brand       string `json:"brand"`
-	Category    string `json:"category"`
-	SKU         string `json:"sku"`
-	Price       int    `json:"price"`
+	Id          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Brand       string  `json:"brand"`
+	Category    string  `json:"category"`
+	SKU         string  `json:"sku"`
+	Price       float32 `json:"price"`
+}
+
+func (p *Product) Parse(row func(...interface{}) error) error {
+	return row(&p.Id, &p.Name, &p.Description, &p.Brand, &p.Category, &p.SKU, &p.Price)
+}
+
+func (*Product) Delete(id int) error {
+	_, err := store.Exec("DELETE FROM products WHERE id = ?", id)
+	return err
 }
 
 func (p *Product) Insert() error {
@@ -28,66 +31,56 @@ func (p *Product) Insert() error {
 		return err
 	}
 
-	fmt.Println("Successfully added")
 	return nil
 }
 
-func CreateProduct(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method is not supported", http.StatusNotFound)
-		return
-	}
-
-	var product Product
-	err := json.NewDecoder(r.Body).Decode(&product)
-	if err != nil {
-		fmt.Println(err.Error())
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
-
-	fmt.Printf("Received product: %+v\n", product)
-
-	if err := product.Insert(); err != nil {
-		fmt.Println(err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Product added successfully"))
+func (p *Product) FetchOne(id int) error {
+	row := store.QueryRow("SELECT * FROM products WHERE id = ?", id)
+	return p.Parse(row.Scan)
 }
 
-func FetchProductsAll(w http.ResponseWriter, r *http.Request) {
+func (*Product) FetchAll() ([]Product, error) {
 	var products []Product
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method is not supported.", http.StatusNotFound)
-		return
-	}
-
 	rows, err := store.Query("SELECT * FROM products")
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
-		var p Product
-		err := rows.Scan(&p.Id, &p.Name, &p.Description, &p.Brand, &p.Category, &p.SKU, &p.Price)
+		var product Product
+		err := product.Parse(rows.Scan)
+
 		if err != nil {
-			http.Error(w, "Issue with one of the found rows", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 
-		products = append(products, p)
+		products = append(products, product)
 	}
 
-	if err := rows.Err(); err != nil {
-		http.Error(w, "Problem with internal rows", http.StatusInternalServerError)
+	return products, nil
+}
+
+func (*Product) FetchPage(size, page int) ([]Product, error) {
+	var products []Product
+
+	rows, err := store.Query("SELECT * FROM products LIMIT ? OFFSET ?", size, size*page)
+	if err != nil {
+		return nil, err
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	encoder := json.NewEncoder(w)
-	encoder.Encode(products)
+	defer rows.Close()
+
+	for rows.Next() {
+		var product Product
+		err := product.Parse(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+
+		products = append(products, product)
+	}
+
+	return products, nil
 }
